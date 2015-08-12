@@ -1,0 +1,11 @@
+http://www.cfar.umd.edu/~hankyu/pubs/ICIP_pose.pdf
+It is w orth noting that training the SVR to produce the com- ple x number g ( ¡ ) = (cos ( ¡ ) ; sin ( ¡ )) of the angle results in a better performance than simply training it to output ¡ . We sus- pect that this is because
+the relation from the pose angle to the image feature locations is essentially trigonometric.
+
+* add vertical visualization
+* add degree display
+* remove binary classification code?
+* write training results to txt
+* add cmd parameters for svm
+* add feature parameter, e.g. enable hog
+* add heuristic supression option
