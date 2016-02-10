@@ -8,7 +8,7 @@
 class FaceDetectionWorker : public dlib::multithreaded_object
 {
 public:
-    FaceDetectionWorker(std::unique_ptr<ImageProvider> imgprovider, int threadcount);
+    FaceDetectionWorker(std::unique_ptr<ImageProvider> imgprovider, int threadcount, int detectEachXFrame);
     ~FaceDetectionWorker();
     BlockingQueue<GazeHypsPtr>& hypsqueue();
 
@@ -19,4 +19,5 @@ private:
     std::unique_ptr<ImageProvider> imgprovider;
     BlockingQueue<GazeHypsPtr> _hypsqueue;
     BlockingQueue<GazeHypsPtr> _workqueue;
+    int _detectEachXFrame;
 };
