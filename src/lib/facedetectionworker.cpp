@@ -43,6 +43,7 @@ void FaceDetectionWorker::detectfaces() {
             GazeHypsPtr gazehyps = _workqueue.pop();
             if (!faceDetected || _detectEachXFrame == 0) {
                 const auto faceDetections = detector(gazehyps->dlibimage);
+                faceDetected = true;
                 for (const auto& facerect : faceDetections) {
                     GazeHyp ghyp(*gazehyps);
                     ghyp.faceDetection = facerect;
@@ -50,7 +51,7 @@ void FaceDetectionWorker::detectfaces() {
                     dlib::correlation_tracker tracker;
                     tracker.start_track(gazehyps->dlibimage, facerect);
                     trackers.push_back(tracker);
-                    faceDetected = true;
+
                 }
             } else {
                 trackCounter++;
