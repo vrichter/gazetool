@@ -16,6 +16,8 @@ public:
     cv::Point featurePoint(FacePart part, int ind) const;
     void draw(cv::Mat& frame);
 
+    void setFaceFeaturePolygons(const std::vector<std::vector<cv::Point> > &value);
+
 protected:
     std::vector<std::vector<cv::Point>> faceFeaturePolygons;
 };

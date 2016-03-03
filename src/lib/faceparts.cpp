@@ -45,6 +45,11 @@ void FaceParts::draw(cv::Mat &frame)
     cv::polylines(frame, faceFeaturePolygons, false, cv::Scalar(150, 200, 0), 1, 'A');
 }
 
+void FaceParts::setFaceFeaturePolygons(const std::vector<std::vector<cv::Point> > &value)
+{
+    faceFeaturePolygons = value;
+}
+
 
 cv::Rect FaceParts::boundingRect(FacePart part) const
 {
