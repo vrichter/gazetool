@@ -11,7 +11,7 @@ public:
     ShapeDetectionWorker(BlockingQueue<GazeHypsPtr>& inqueue, const std::string &modelfilename, int threadcount);
     ~ShapeDetectionWorker();
     BlockingQueue<GazeHypsPtr>& hypsqueue();
-
+    int num_parts();
 private:
     void thread();
     void alignFaces();

@@ -32,6 +32,11 @@ BlockingQueue<GazeHypsPtr>& ShapeDetectionWorker::hypsqueue()
     return _hypsqueue;
 }
 
+int ShapeDetectionWorker::num_parts()
+{
+    return _shapePredictor.num_parts();
+}
+
 void ShapeDetectionWorker::alignFaces() {
     //working with thread individual copy, since the detector is not thread safe.
     dlib::shape_predictor sp = _shapePredictor;
