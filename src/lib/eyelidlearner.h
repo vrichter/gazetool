@@ -16,7 +16,7 @@ public:
     virtual void loadClassifier(const std::string& filename);
     virtual void classify(GazeHyp &ghyp);
     virtual void train(const std::string &outfilename);
-    virtual void visualize(GazeHyp& ghyp);
+    virtual void visualize(GazeHyp& ghyp, cv::Mat& img);
     virtual std::string getId();
 
 protected:

@@ -105,11 +105,11 @@ void MutualGazeLearner::train(const string& outfilename) {
 }
 
 
-void MutualGazeLearner::visualize(GazeHyp& ghyp)
+void MutualGazeLearner::visualize(GazeHyp& ghyp, cv::Mat &img)
 {
     if (ghyp.isMutualGaze.get_value_or(false)) {
         auto fr = ghyp.pupils.faceRect();
-        cv::rectangle(ghyp.parentHyp.frame, fr, cv::Scalar(0, 0, 255), 2, 'A');
+        cv::rectangle(img, fr, cv::Scalar(0, 0, 255), 2, 'A');
     }
 }
 

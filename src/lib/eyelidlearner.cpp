@@ -71,7 +71,7 @@ void EyeLidLearner::train(const string &outfilename) {
 }
 
 
-void EyeLidLearner::visualize(GazeHyp& ghyp)
+void EyeLidLearner::visualize(GazeHyp& ghyp, cv::Mat &img)
 {
     if (!ghyp.eyeLidClassification.is_initialized() || !decision_function.decision_funct.basis_vectors.size()) return;
     auto eoclass = ghyp.eyeLidClassification.get();
@@ -79,12 +79,12 @@ void EyeLidLearner::visualize(GazeHyp& ghyp)
     cv::rectangle(ghyp.eyePatch, cv::Rect(cv::Point(eoclass*(ghyp.eyePatch.cols-1)-1), cv::Size(2, 2)),
                   cv::Scalar(255, color-50, color-50), -1);
     cv::Rect r = ghyp.pupils.faceRect();
-    cv::rectangle(ghyp.parentHyp.frame, cv::Rect(cv::Point(r.x+r.width, r.y+eoclass*r.height), cv::Size(5, 5)),
+    cv::rectangle(img, cv::Rect(cv::Point(r.x+r.width, r.y+eoclass*r.height), cv::Size(5, 5)),
                   cv::Scalar(255, color-50, color-50), -1, 'A');
     if (eoclass > 0.5) {
-        cv::line(ghyp.parentHyp.frame, r.tl()+cv::Point(r.width/5, r.height/5),
+        cv::line(img, r.tl()+cv::Point(r.width/5, r.height/5),
                  r.br()-cv::Point(r.width/5, r.height/5), cv::Scalar(250, 0, 250), 2, 'A');
-        cv::line(ghyp.parentHyp.frame, r.tl()+cv::Point(r.width-r.width/5, r.height/5),
+        cv::line(img, r.tl()+cv::Point(r.width-r.width/5, r.height/5),
                  r.tl()+cv::Point(r.width/5, r.height-r.height/5), cv::Scalar(250, 0, 250), 2, 'A');
     }
 }

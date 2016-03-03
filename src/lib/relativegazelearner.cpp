@@ -58,7 +58,7 @@ void RelativeGazeLearner::train(const string& outfilename) {
     _train(outfilename, learned_function, trainer);
 }
 
-void RelativeGazeLearner::visualize(GazeHyp& ghyp, double mutualGazeTolerance)
+void RelativeGazeLearner::visualize(GazeHyp& ghyp, cv::Mat &img, double mutualGazeTolerance)
 {
     if (!ghyp.horizontalGazeEstimation.is_initialized()) return;
     double relativeGazeEst = ghyp.horizontalGazeEstimation.get();
@@ -72,8 +72,8 @@ void RelativeGazeLearner::visualize(GazeHyp& ghyp, double mutualGazeTolerance)
     cv::Point p2;
     p2.x = round(p1.x + length * cos(angle * CV_PI / 180.0));
     p2.y = round(p1.y + length * sin(angle * CV_PI / 180.0));
-    //cv::line(ghyp.parentHyp.frame, p1, p2, cv::Scalar(255, 150, 150), 2, 'A');
-    cv::line(ghyp.parentHyp.frame, p1, p2, cv::Scalar(255, 0, 0), 2, 'A');
+    //cv::line(img, p1, p2, cv::Scalar(255, 150, 150), 2, 'A');
+    cv::line(img, p1, p2, cv::Scalar(255, 0, 0), 2, 'A');
     cv::Mat facereg = ghyp.pupils.faceRegion();
     int limita = facereg.cols*(0.5+mutualGazeTolerance/90.0);
     int limitb = facereg.cols*(0.5-mutualGazeTolerance/90.0);

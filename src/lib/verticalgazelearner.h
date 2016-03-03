@@ -17,7 +17,7 @@ public:
     //virtual void extractFeatures(GazeHyp &ghyp);
     virtual void classify(GazeHyp &ghyp);
     virtual void train(const std::string &outfilename);
-    virtual void visualize(GazeHyp& ghyp, double mutualGazeTolerance);
+    virtual void visualize(GazeHyp& ghyp, cv::Mat &img, double mutualGazeTolerance);
     virtual std::string getId();
 
 protected:

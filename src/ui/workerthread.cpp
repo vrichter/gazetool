@@ -261,11 +261,11 @@ void WorkerThread::process() {
             auto& faceparts = ghyp.faceParts;
             faceparts.draw(frame);
             pupils.draw(frame);
-            glearner.visualize(ghyp);
-            eoclearner.visualize(ghyp);
-            rellearner.visualize(ghyp);
-            vglearner.visualize(ghyp, verticalGazeTolerance);
-            rglearner.visualize(ghyp, horizGazeTolerance);
+            glearner.visualize(ghyp, frame);
+            eoclearner.visualize(ghyp, frame);
+            rellearner.visualize(ghyp, frame);
+            vglearner.visualize(ghyp, frame, verticalGazeTolerance);
+            rglearner.visualize(ghyp, frame, horizGazeTolerance);
             if (!trainLid.empty()) eoclearner.accumulate(ghyp);
             if (!trainGaze.empty()) glearner.accumulate(ghyp);
             if (!trainGazeEstimator.empty()) rglearner.accumulate(ghyp);
