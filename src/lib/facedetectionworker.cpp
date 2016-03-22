@@ -41,33 +41,44 @@ void FaceDetectionWorker::detectfaces() {
     try {
         while (true) {
             GazeHypsPtr gazehyps = _workqueue.pop();
-            if (!faceDetected || _detectEachXFrame == 0) {
+
+            if (_detectEachXFrame == -1) {
                 const auto faceDetections = detector(gazehyps->dlibimage);
                 for (const auto& facerect : faceDetections) {
                     faceDetected = true;
                     GazeHyp ghyp(*gazehyps);
                     ghyp.faceDetection = facerect;
                     gazehyps->addGazeHyp(ghyp);
-                    dlib::correlation_tracker tracker;
-                    tracker.start_track(gazehyps->dlibimage, facerect);
-                    trackers.push_back(tracker);
-
                 }
             } else {
-                trackCounter++;
-                for (auto& tracker : trackers) {
-                    GazeHyp ghyp(*gazehyps);
-                    tracker.update(gazehyps->dlibimage);
-                    ghyp.faceDetection = tracker.get_position();
-                    gazehyps->addGazeHyp(ghyp);
+                if (!faceDetected || _detectEachXFrame == 0) {
+                    const auto faceDetections = detector(gazehyps->dlibimage);
+                    for (const auto& facerect : faceDetections) {
+                        faceDetected = true;
+                        GazeHyp ghyp(*gazehyps);
+                        ghyp.faceDetection = facerect;
+                        gazehyps->addGazeHyp(ghyp);
+                        dlib::correlation_tracker tracker;
+                        tracker.start_track(gazehyps->dlibimage, facerect);
+                        trackers.push_back(tracker);
+
+                    }
+                } else {
+                    trackCounter++;
+                    for (auto& tracker : trackers) {
+                        GazeHyp ghyp(*gazehyps);
+                        tracker.update(gazehyps->dlibimage);
+                        ghyp.faceDetection = tracker.get_position();
+                        gazehyps->addGazeHyp(ghyp);
+
+                    }
+                    if (trackCounter == _detectEachXFrame) {
+                        trackers.clear();
+                        trackCounter = 0;
+                        faceDetected = false;
+                    }
 
                 }
-                if (trackCounter == _detectEachXFrame) {
-                    trackers.clear();
-                    trackCounter = 0;
-                    faceDetected = false;
-                }
-
             }
             gazehyps->setready(-1);
         }
