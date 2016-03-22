@@ -8,14 +8,16 @@
 
 class ImageProvider
 {
-  public:
+public:
+    enum InputFormat {CAMERA, VIDEO, BATCH};
+
     virtual ~ImageProvider() {}
     virtual bool get(cv::Mat& frame) = 0;
     virtual std::string getLabel() = 0;
     virtual std::string getId() = 0;
-
-  protected:
+protected:
     cv::Mat image;
+    InputFormat inputFormat;
 };
 
 class CvVideoImageProvider : public ImageProvider

@@ -1,6 +1,7 @@
 #include "imageprovider.h"
 
 #include <fstream>
+#include <iostream>
 #include <boost/tokenizer.hpp>
 
 
@@ -18,6 +19,7 @@ CvVideoImageProvider::CvVideoImageProvider()
 
 CvVideoImageProvider::CvVideoImageProvider(int camera, cv::Size size, int desiredFps)
 {
+    inputFormat = CAMERA;
     capture = cv::VideoCapture(camera);
     desiredSize = size;
     if (size != cv::Size()) {
@@ -31,6 +33,7 @@ CvVideoImageProvider::CvVideoImageProvider(int camera, cv::Size size, int desire
 
 CvVideoImageProvider::CvVideoImageProvider(const string &infile, cv::Size size)
 {
+    inputFormat = VIDEO;
     capture = cv::VideoCapture(infile);
     desiredSize = size;
 }
@@ -53,7 +56,11 @@ string CvVideoImageProvider::getLabel()
 
 string CvVideoImageProvider::getId()
 {
-    return "";
+    string returnValue = "";
+    if (inputFormat != CAMERA) {
+        returnValue = std::to_string(capture.get(CV_CAP_PROP_POS_FRAMES));
+    }
+    return returnValue;
 }
 
 
@@ -67,6 +74,7 @@ BatchImageProvider::BatchImageProvider() : position(0)
 
 BatchImageProvider::BatchImageProvider(const string &batchfile) : position(-1)
 {
+    inputFormat = BATCH;
     ifstream batchfs(batchfile);
     if (!batchfs.is_open()) {
         throw runtime_error(string("Cannot open file list " + batchfile));
@@ -91,6 +99,7 @@ BatchImageProvider::BatchImageProvider(const string &batchfile) : position(-1)
 BatchImageProvider::BatchImageProvider(const std::vector<string> &filelist)
     : position(-1), filenames(filelist)
 {
+    inputFormat = BATCH;
 }
 
 bool BatchImageProvider::get(cv::Mat &frame)
