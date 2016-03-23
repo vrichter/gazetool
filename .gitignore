@@ -1,3 +1,4 @@
+*.user*
 build
 CMakeCache.txt
 CMakeFiles
