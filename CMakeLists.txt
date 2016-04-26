@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 PROJECT(gazetool_demo)
 
-cmake_policy(SET CMP0043 NEW)
-
 set(GAZETOOL_MAJOR_VERSION 0)
 set(GAZETOOL_MINOR_VERSION 1)
 set(GAZETOOL_PATCH_VERSION 0)
