@@ -13,7 +13,7 @@
 class GazeHypList;
 typedef std::shared_ptr<GazeHypList> GazeHypsPtr;
 #ifdef ENABLE_QT5
-#include <qt5/QtCore/QMetaType>
+#include <QtCore/QMetaType>
 Q_DECLARE_METATYPE(GazeHypsPtr)
 #endif
 

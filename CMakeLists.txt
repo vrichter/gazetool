@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 PROJECT(gazetool_demo)
 
+cmake_policy(SET CMP0043 NEW)
+
 set(GAZETOOL_MAJOR_VERSION 0)
 set(GAZETOOL_MINOR_VERSION 1)
 set(GAZETOOL_PATCH_VERSION 0)
@@ -52,7 +54,8 @@ SET(GAZETOOL_BIN
     ${UI_HEADERS})
 
 ADD_EXECUTABLE(gazetool_ui ${GAZETOOL_BIN})
-ADD_DEPENDENCIES(gazetool_ui ${UI_HEADERS})
+
+#ADD_DEPENDENCIES(gazetool_ui ${UI_HEADERS})
 TARGET_LINK_LIBRARIES(gazetool_ui gazetool GL)
 qt5_use_modules(gazetool_ui Core Widgets Gui OpenGL)
 

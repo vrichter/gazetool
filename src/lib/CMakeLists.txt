@@ -57,19 +57,29 @@ ADD_LIBRARY(gazetool SHARED ${GAZETOOL_LIB_SRC})
 target_link_libraries(gazetool ${OpenCV_LIBS} ${dlib_LIBRARIES} ${Boost_LIBRARIES} ${YARP_LIBRARIES})
 
 
-set(INSTALL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include/gazetool/")
+install(TARGETS gazetool EXPORT gazetoolTargets
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include/gazetool
+)
 
 configure_file("config/gazetoolConfig.cmake.in"
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gazetoolConfig.cmake" @ONLY)
 configure_file("config/gazetoolConfigVersion.cmake.in"
   "${PROJECT_BINARY_DIR}/gazetoolConfigVersion.cmake" @ONLY)
 
-export(TARGETS gazetool
+export(EXPORT gazetoolTargets
   FILE "${PROJECT_BINARY_DIR}/gazetoolTargets.cmake")
-export(PACKAGE gazetool)
 
 INSTALL(TARGETS gazetool
      LIBRARY DESTINATION lib
+)
+
+install(EXPORT gazetoolTargets
+  FILE
+    gazetoolConfigVersion.cmake
+  DESTINATION
+    "lib/cmake/gazetool"
 )
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
@@ -79,6 +89,5 @@ INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
 
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gazetoolConfig.cmake"
-  "${PROJECT_BINARY_DIR}/gazetoolConfigVersion.cmake"
   "${PROJECT_BINARY_DIR}/gazetoolTargets.cmake"
   DESTINATION "lib/cmake/gazetool" COMPONENT dev)
