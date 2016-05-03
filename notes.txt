@@ -1,2 +1,0 @@
-with mask: MSE and R-Squared:  32.4949 0.685389 
-with ellipse outer filter: MSE and R-Squared:  31.0687 0.696349

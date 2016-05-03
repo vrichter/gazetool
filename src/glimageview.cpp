@@ -1,4 +1,5 @@
 #include "glimageview.h"
+#include <qsurfaceformat.h>
 
 GLImageView::GLImageView(QWidget *parent) :
         QGLWidget(parent), format(GL_BGR), depth(GL_UNSIGNED_BYTE) {
