@@ -6,24 +6,23 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
-#include <QCoreApplication>
 
-#include "imageprovider.h"
-#include "faceparts.h"
-#include "pupilfinder.h"
-#include "mutualgazelearner.h"
-#include "verticalgazelearner.h"
-#include "eyelidlearner.h"
-#include "relativeeyelidlearner.h"
-#include "relativegazelearner.h"
-#include "facedetectionworker.h"
-#include "shapedetectionworker.h"
-#include "regressionworker.h"
-#include "eyepatcher.h"
-#include "rlssmoother.h"
+#include "../lib/imageprovider.h"
+#include "../lib/faceparts.h"
+#include "../lib/pupilfinder.h"
+#include "../lib/mutualgazelearner.h"
+#include "../lib/verticalgazelearner.h"
+#include "../lib/eyelidlearner.h"
+#include "../lib/relativeeyelidlearner.h"
+#include "../lib/relativegazelearner.h"
+#include "../lib/facedetectionworker.h"
+#include "../lib/shapedetectionworker.h"
+#include "../lib/regressionworker.h"
+#include "../lib/eyepatcher.h"
+#include "../lib/rlssmoother.h"
 
 #ifdef ENABLE_YARP_SUPPORT
-    #include "yarpsupport.h"
+    #include "../lib/yarpsupport.h"
 #endif
 
 using namespace std;
@@ -108,7 +107,7 @@ void WorkerThread::dumpPpm(ofstream& fout, const cv::Mat& frame) {
     if (fout.is_open()) {
         vector<uchar> buff;
         cv::imencode(".pgm", frame, buff);
-        fout.write((char*)&buff.front(), buff.size());
+        fout.write((char*)&buff.front(), (streamsize) buff.size());
     }
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
-#include "gazehyps.h"
+#include "../lib/gazehyps.h"
 
 namespace Ui {
     class GazerGui;

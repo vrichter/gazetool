@@ -5,11 +5,11 @@
 #include <vector>
 #include <string>
 
-#include "imageprovider.h"
-#include "faceparts.h"
-#include "pupilfinder.h"
-#include "gazehyps.h"
-#include "abstractlearner.h"
+#include "../lib/imageprovider.h"
+#include "../lib/faceparts.h"
+#include "../lib/pupilfinder.h"
+#include "../lib/gazehyps.h"
+#include "../lib/abstractlearner.h"
 
 Q_DECLARE_METATYPE(std::string)
 
