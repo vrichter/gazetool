@@ -12,9 +12,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 OPTION(ENABLE_YARP_SUPPORT "Enable yarp support" OFF)
-
-add_subdirectory(src/lib)
-add_subdirectory(data)
+OPTION(ENABLE_QT_SUPPORT   "Enable qt support" ON)
 
 set(CMAKE_AUTOMOC TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -22,45 +20,67 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 FIND_PACKAGE(OpenCV REQUIRED)
 FIND_PACKAGE(dlib REQUIRED)
 FIND_PACKAGE(Boost COMPONENTS system chrono program_options REQUIRED)
-FIND_PACKAGE(Qt5Core REQUIRED)
-FIND_PACKAGE(Qt5Widgets REQUIRED)
-FIND_PACKAGE(Qt5OpenGL REQUIRED)
-FIND_PACKAGE(Qt5Gui REQUIRED)
-ADD_DEFINITIONS(-DENABLE_QT5)
 
+SET(GAZETOOL_INCLUDES
+    src/lib
+    ${OpenCV_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIR}
+    ${dlib_INCLUDE_DIRS}
+)
+
+SET(GAZETOOL_LIBS
+    ${OpenCV_LIBS}
+    ${dlib_LIBRARIES}
+    ${Boost_LIBRARIES}
+)
+
+IF(ENABLE_QT_SUPPORT)
+    FIND_PACKAGE(Qt5Core REQUIRED)
+    FIND_PACKAGE(Qt5Widgets REQUIRED)
+    FIND_PACKAGE(Qt5OpenGL REQUIRED)
+    FIND_PACKAGE(Qt5Gui REQUIRED)
+    ADD_DEFINITIONS(-DENABLE_QT5)
+ENDIF()
 
 IF(ENABLE_YARP_SUPPORT)
     FIND_PACKAGE(YARP REQUIRED)
+    ADD_DEFINITIONS(-DENABLE_YARP_SUPPORT)
+    SET(GAZETOOL_INCLUDES ${GAZETOOL_INCLUDES} ${YARP_INCLUDE_DIRS})
+    SET(GAZETOOL_LIBS ${GAZETOOL_LIBS} ${YARP_LIBRARIES})
 ENDIF()
 
-INCLUDE_DIRECTORIES(
-    ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIR}
-    ${YARP_INCLUDE_DIRS}
-    ${dlib_INCLUDE_DIRS}
-    src/lib
-    src/ui)
+add_subdirectory(src/lib)
+add_subdirectory(src/ui)
+add_subdirectory(data)
 
-
-QT5_WRAP_UI(UI_HEADERS src/ui/gazergui.ui)
-
-SET(GAZETOOL_BIN
-    src/ui/main.cpp
-    src/ui/gazergui.cpp
-    src/ui/workerthread.cpp
-    src/ui/glimageview.cpp
-    ${UI_HEADERS})
-
-ADD_EXECUTABLE(gazetool_ui ${GAZETOOL_BIN})
-
-#ADD_DEPENDENCIES(gazetool_ui ${UI_HEADERS})
-TARGET_LINK_LIBRARIES(gazetool_ui gazetool GL)
-qt5_use_modules(gazetool_ui Core Widgets Gui OpenGL)
-
-CONFIGURE_FILE("src/ui/config/gazetool.sh.in" gazetool.sh @ONLY)
-
-INSTALL(TARGETS gazetool_ui
-  RUNTIME DESTINATION bin
-)
-
-INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gazetool.sh DESTINATION bin)
+#INCLUDE_DIRECTORIES(
+#    ${OpenCV_INCLUDE_DIRS}
+#    ${Boost_INCLUDE_DIR}
+#    ${YARP_INCLUDE_DIRS}
+#    ${dlib_INCLUDE_DIRS}
+#    src/lib
+#    src/ui)
+#
+#
+#QT5_WRAP_UI(UI_HEADERS src/ui/gazergui.ui)
+#
+#SET(GAZETOOL_BIN
+#    src/ui/main.cpp
+#    src/ui/gazergui.cpp
+#    src/ui/workerthread.cpp
+#    src/ui/glimageview.cpp
+#    ${UI_HEADERS})
+#
+#ADD_EXECUTABLE(gazetool_ui ${GAZETOOL_BIN})
+#
+##ADD_DEPENDENCIES(gazetool_ui ${UI_HEADERS})
+#TARGET_LINK_LIBRARIES(gazetool_ui gazetool GL)
+#qt5_use_modules(gazetool_ui Core Widgets Gui OpenGL)
+#
+#CONFIGURE_FILE("src/ui/config/gazetool.sh.in" gazetool.sh @ONLY)
+#
+#INSTALL(TARGETS gazetool_ui
+#  RUNTIME DESTINATION bin
+#)
+#
+#INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gazetool.sh DESTINATION bin)
