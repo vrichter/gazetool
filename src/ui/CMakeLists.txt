@@ -24,4 +24,17 @@ IF(ENABLE_QT_SUPPORT)
     )
 ENDIF()
 
+
+SET(gazetool_hl
+    headless.cpp
+    mainloop.cpp
+    )
+
+ADD_EXECUTABLE(gazetool_hl headless.cpp mainloop.cpp)
+TARGET_LINK_LIBRARIES(gazetool_hl gazetool ${GAZETOOL_LIBS})
+
+INSTALL(TARGETS gazetool_hl
+  RUNTIME DESTINATION bin
+)
+
 INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gazetool.sh DESTINATION bin)
