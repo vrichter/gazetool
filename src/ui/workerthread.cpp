@@ -6,6 +6,7 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
+#include <QCoreApplication>
 
 #include "../lib/imageprovider.h"
 #include "../lib/faceparts.h"
