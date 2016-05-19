@@ -205,12 +205,12 @@ void MainLoop::process() {
     tryLoadModel(rglearner, estimateGaze);
     tryLoadModel(rellearner, estimateLid);
     tryLoadModel(vglearner, estimateVerticalGaze);
-    //TODO: emit statusmsg("Setting up detector threads...");
+    statusSubject.notify("Setting up detector threads...");
     std::unique_ptr<ImageProvider> imgProvider(getImageProvider());
     FaceDetectionWorker faceworker(std::move(imgProvider), threadcount);
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
     RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
-    //TODO: emit statusmsg("Detector threads started");
+    statusSubject.notify("Detector threads started");
 #ifdef ENABLE_YARP_SUPPORT
     unique_ptr<YarpSender> yarpSender;
     if (inputType == "port") {
@@ -233,7 +233,7 @@ void MainLoop::process() {
     RlsSmoother horizGazeSmoother;
     RlsSmoother vertGazeSmoother;
     RlsSmoother lidSmoother(5, 0.95, 0.09);
-    //TODO: emit statusmsg("Entering processing loop...");
+    statusSubject.notify("Entering processing loop...");
     cerr << "Processing frames..." << endl;
     TemporalStats temporalStats;
     while(!shouldStop) {
@@ -275,7 +275,7 @@ void MainLoop::process() {
 #ifdef ENABLE_YARP_SUPPORT
         if (yarpSender) yarpSender->sendGazeHypotheses(gazehyps);
 #endif
-        //TODO: emit imageProcessed(gazehyps);
+        imageProcessedSubject.notify(gazehyps);
         //TODO: QCoreApplication::processEvents();
         if (limitFps > 0) {
             usleep(1e6/limitFps);
@@ -300,7 +300,7 @@ void MainLoop::process() {
     if (rellearner.sampleCount() > 0) {
         rellearner.train(trainLidEstimator);
     }
-    //TODO: emit finished();
+    finishedSubject.notify(nullptr);
     cerr << "Primary worker thread finished processing" << endl;
 }
 

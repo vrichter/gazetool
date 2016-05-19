@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <iostream>
 #include <stdexcept>
 #include <boost/program_options.hpp>
@@ -158,5 +159,13 @@ void parse_options(int argc, char** argv, MainLoop& mainloop){
 int main(int argc, char** argv) {
     MainLoop mainloop;
     parse_options(argc,argv,mainloop);
+
+    mainloop.statusSignal().connect(
+          [] (std::string message) {std::cerr << "status: " << message << std::endl;}
+    );
+    mainloop.finishedSignal().connect(
+          [] (void *) {std::cerr << "...finished..." << std::endl;}
+    );
+
     mainloop.process();
 }

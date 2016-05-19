@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <functional>
+#include <boost/signals2/signal.hpp>
 
 #include "../lib/imageprovider.h"
 #include "../lib/faceparts.h"
@@ -10,11 +12,64 @@
 #include "../lib/gazehyps.h"
 #include "../lib/abstractlearner.h"
 
-class MainLoop
-{
+template<typename Data>
+class Signal {
+public:
+  typedef boost::signals2::connection  Connection;
+  typedef Data DataType;
+
+  virtual ~Signal() = default;
+  virtual Connection connect(std::function<void (Data)> subscriber) = 0;
+  virtual void disconnect(Connection subscriber) = 0;
+};
+
+template<typename Data>
+class Slot {
+public:
+  typedef Data DataType;
+
+  virtual ~Slot() = default;
+  virtual void notify(Data data) = 0;
+};
+
+template<typename Data>
+class Subject : public Signal<Data>, public Slot<Data>{
 
 private:
+    typedef boost::signals2::signal<void (Data)> Signal;
+public:
+    typedef boost::signals2::connection  Connection;
+    typedef Data DataType;
+    typedef std::shared_ptr<Subject<Data>> Ptr;
+
+    Subject() = default;
+    virtual ~Subject() = default;
+
+    virtual Connection connect(std::function<void (Data)> subscriber) final {
+      return m_Signal.connect(subscriber);
+    }
+
+    virtual void disconnect(Connection subscriber) final {
+      subscriber.disconnect();
+    }
+
+    virtual void notify(Data data) final {
+      m_Signal(data);
+    }
+
+private:
+    Signal m_Signal;
+};
+
+
+class MainLoop
+{
+private:
     bool shouldStop = false;
+    Subject<void*> finishedSubject;
+    Subject<GazeHypsPtr> imageProcessedSubject;
+    Subject<std::string> statusSubject;
+
     std::unique_ptr<ImageProvider> getImageProvider();
     void normalizeMat(const cv::Mat &in, cv::Mat &out);
     void dumpPpm(std::ofstream &fout, const cv::Mat &frame);
@@ -50,12 +105,18 @@ public:
     bool showstats = true;
     TrainingParameters trainingParameters;
 
-    // signals
-    void finished();
-    void imageProcessed(GazeHypsPtr gazehyps);
-    void statusmsg(std::string msg);
+    Signal<void*>& finishedSignal() {
+      return finishedSubject;
+    }
 
-    // slots
+    Signal<GazeHypsPtr>& imageProcessedSignal() {
+      return imageProcessedSubject;
+    }
+
+    Signal<std::string>& statusSignal(){
+      return statusSubject;
+    }
+
     void process();
     void stop();
     void setHorizGazeTolerance(double tol);
