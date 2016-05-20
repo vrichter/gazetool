@@ -24,16 +24,7 @@ public:
 };
 
 template<typename Data>
-class Slot {
-public:
-  typedef Data DataType;
-
-  virtual ~Slot() = default;
-  virtual void notify(Data data) = 0;
-};
-
-template<typename Data>
-class Subject : public Signal<Data>, public Slot<Data>{
+class Subject : public Signal<Data> {
 
 private:
     typedef boost::signals2::signal<void (Data)> Signal;
@@ -53,7 +44,7 @@ public:
       subscriber.disconnect();
     }
 
-    virtual void notify(Data data) final {
+    void notify(Data data) {
       m_Signal(data);
     }
 
