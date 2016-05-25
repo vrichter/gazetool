@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
         }
         return result;
 #else
-        cerr << "Appplications build without qt. Assuming --novis"
+        cerr << "Appplication build without qt. Assuming --novis" << std::endl;
 #endif
     }
 
