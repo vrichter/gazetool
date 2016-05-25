@@ -1,9 +1,14 @@
 #include <signal.h>
 #include <iostream>
 #include <stdexcept>
+#include <future>
+#include <thread>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
-
+#ifdef ENABLE_QT5
+#include <QApplication>
+#include "gazergui.h"
+#endif
 #include "mainloop.h"
 
 using namespace std;
@@ -50,7 +55,7 @@ TrainingParameters parse_training_options(po::variables_map& options){
 
 }
 
-void parse_options(int argc, char** argv, MainLoop& mainloop){
+po::variables_map parse_options(int argc, char** argv){
     po::variables_map options;
     po::options_description allopts("\n*** dlibgazer options");
     po::options_description desc("general options");
@@ -99,73 +104,114 @@ void parse_options(int argc, char** argv, MainLoop& mainloop){
     allopts.add(desc).add(inputops).add(classifyopts).add(trainopts);
     try {
         po::store(po::parse_command_line(argc, argv, allopts), options);
-        if (options.count("help")) {
-            allopts.print(cout);
-            std::exit(0);
-        }
-        po::notify(options);
-        for (const auto& s : { "camera", "image", "video", "port", "batch"}) {
-            if (options.count(s)) {
-                if (mainloop.inputType.empty()) {
-                    mainloop.inputParam = options[s].as<string>();
-                    mainloop.inputType = s;
-                } else {
-                    throw po::error("More than one input option provided");
-                }
-            }
-        }
-        if (mainloop.inputType.empty()) {
-            throw po::error("No input option provided");
-        }
-        if (options.count("size")) {
-            auto sizestr = options["size"].as<string>();
-            vector<string> args;
-            boost::split(args, sizestr, boost::is_any_of(":x "));
-            if (args.size() != 2) throw po::error("invalid size " + sizestr);
-            mainloop.inputSize = cv::Size(boost::lexical_cast<int>(args[0]), boost::lexical_cast<int>(args[1]));
-        }
-        copy_check_arg(options,"fps", mainloop.desiredFps);
-        copy_check_arg(options,"threads", mainloop.threadcount);
-        copy_check_arg(options,"streamppm", mainloop.streamppm);
-        copy_check_arg(options,"model", mainloop.modelfile);
-        copy_check_arg(options,"classify-gaze", mainloop.classifyGaze);
-        copy_check_arg(options,"train-gaze-classifier", mainloop.trainGaze);
-        copy_check_arg(options,"train-lid-classifier", mainloop.trainLid);
-        copy_check_arg(options,"train-lid-estimator", mainloop.trainLidEstimator);
-        copy_check_arg(options,"classify-lid", mainloop.classifyLid);
-        copy_check_arg(options,"estimate-lid", mainloop.estimateLid);
-        copy_check_arg(options,"estimate-gaze", mainloop.estimateGaze);
-        copy_check_arg(options,"estimate-verticalgaze", mainloop.estimateVerticalGaze);
-        copy_check_arg(options,"train-gaze-estimator", mainloop.trainGazeEstimator);
-        copy_check_arg(options,"train-verticalgaze-estimator", mainloop.trainVerticalGazeEstimator);
-        copy_check_arg(options,"limitfps", mainloop.limitFps);
-        copy_check_arg(options,"dump-estimates", mainloop.dumpEstimates);
-        copy_check_arg(options,"horizontal-gaze-tolerance", mainloop.horizGazeTolerance);
-        copy_check_arg(options,"vertical-gaze-tolerance", mainloop.verticalGazeTolerance);
-        mainloop.trainingParameters = parse_training_options(options);
-        //if (options.count("quiet")) mainloop.showstats = false;
-        //gui.setHorizGazeTolerance(mainloop.horizGazeTolerance);
-        //gui.setVerticalGazeTolerance(mainloop.verticalGazeTolerance);
-        //bool mirror = false;
-        //copy_check_arg(options,"mirror", mirror);
-        //gui.setMirror(mirror);
-    }
-    catch(po::error& e) {
+    } catch(po::error& e) {
         cerr << "Error parsing command line:" << endl << e.what() << endl;
         std::exit(1);
     }
+    if (options.count("help")) {
+        allopts.print(cout);
+        std::exit(0);
+    }
+    po::notify(options);
+    return options;
 }
 
-int main(int argc, char** argv) {
-    MainLoop mainloop;
-    parse_options(argc,argv,mainloop);
+void set_options(MainLoop& mainloop, po::variables_map& options){
+    for (const auto& s : { "camera", "image", "video", "port", "batch"}) {
+        if (options.count(s)) {
+            if (mainloop.inputType.empty()) {
+                mainloop.inputParam = options[s].as<string>();
+                mainloop.inputType = s;
+            } else {
+                throw po::error("More than one input option provided");
+            }
+        }
+    }
+    if (mainloop.inputType.empty()) {
+        throw po::error("No input option provided");
+    }
+    if (options.count("size")) {
+        auto sizestr = options["size"].as<string>();
+        vector<string> args;
+        boost::split(args, sizestr, boost::is_any_of(":x "));
+        if (args.size() != 2) throw po::error("invalid size " + sizestr);
+        mainloop.inputSize = cv::Size(boost::lexical_cast<int>(args[0]), boost::lexical_cast<int>(args[1]));
+    }
+    copy_check_arg(options,"fps", mainloop.desiredFps);
+    copy_check_arg(options,"threads", mainloop.threadcount);
+    copy_check_arg(options,"streamppm", mainloop.streamppm);
+    copy_check_arg(options,"model", mainloop.modelfile);
+    copy_check_arg(options,"classify-gaze", mainloop.classifyGaze);
+    copy_check_arg(options,"train-gaze-classifier", mainloop.trainGaze);
+    copy_check_arg(options,"train-lid-classifier", mainloop.trainLid);
+    copy_check_arg(options,"train-lid-estimator", mainloop.trainLidEstimator);
+    copy_check_arg(options,"classify-lid", mainloop.classifyLid);
+    copy_check_arg(options,"estimate-lid", mainloop.estimateLid);
+    copy_check_arg(options,"estimate-gaze", mainloop.estimateGaze);
+    copy_check_arg(options,"estimate-verticalgaze", mainloop.estimateVerticalGaze);
+    copy_check_arg(options,"train-gaze-estimator", mainloop.trainGazeEstimator);
+    copy_check_arg(options,"train-verticalgaze-estimator", mainloop.trainVerticalGazeEstimator);
+    copy_check_arg(options,"limitfps", mainloop.limitFps);
+    copy_check_arg(options,"dump-estimates", mainloop.dumpEstimates);
+    copy_check_arg(options,"horizontal-gaze-tolerance", mainloop.horizGazeTolerance);
+    copy_check_arg(options,"vertical-gaze-tolerance", mainloop.verticalGazeTolerance);
+    mainloop.trainingParameters = parse_training_options(options);
+    if (options.count("quiet")) mainloop.showstats = false;
+}
 
-    mainloop.statusSignal().connect(
+#ifdef ENABLE_QT5
+void set_options(GazerGui& gui, po::variables_map& options){
+    bool mirror = false;
+    double hgazetol, vgazetol;
+    copy_check_arg(options,"mirror", mirror);
+    copy_check_arg(options,"horizontal-gaze-tolerance", hgazetol);
+    copy_check_arg(options,"vertical-gaze-tolerance", vgazetol);
+    gui.setHorizGazeTolerance(hgazetol);
+    gui.setVerticalGazeTolerance(vgazetol);
+    gui.setMirror(mirror);
+}
+#endif
+
+int main(int argc, char** argv) {
+    auto mainloop = std::make_shared<MainLoop>();
+    auto options = parse_options(argc,argv);
+    set_options(*mainloop,options);
+
+    mainloop->statusSignal().connect(
           [] (std::string message) {std::cerr << "status: " << message << std::endl;}
     );
-    mainloop.finishedSignal().connect(
+    mainloop->finishedSignal().connect(
           [] (void *) {std::cerr << "...finished..." << std::endl;}
     );
 
-    mainloop.process();
+#ifdef ENABLE_QT5
+    if (!options.count("novis")){
+        QApplication app(argc, argv);
+        GazerGui gui;
+        set_options(gui,options);
+        WorkerAdapter gazer(mainloop);
+
+        QObject::connect(&app, SIGNAL(lastWindowClosed()), &gazer, SLOT(stop()));
+        QObject::connect(&gazer, SIGNAL(imageProcessed(GazeHypsPtr)), &gui,
+                         SLOT(displayGazehyps(GazeHypsPtr)), Qt::QueuedConnection);
+        QObject::connect(&gazer, SIGNAL(statusmsg(std::string)), &gui, SLOT(setStatusmsg(std::string)));
+        QObject::connect(&gui, SIGNAL(horizGazeToleranceChanged(double)), &gazer, SLOT(setHorizGazeTolerance(double)));
+        QObject::connect(&gui, SIGNAL(verticalGazeToleranceChanged(double)), &gazer, SLOT(setVerticalGazeTolerance(double)));
+        QObject::connect(&gui, SIGNAL(smoothingChanged(bool)), &gazer, SLOT(setSmoothing(bool)));
+        if (!options.count("noquit")) {
+            QObject::connect(&gazer, SIGNAL(finished()), &app, SLOT(quit()));
+        }
+
+        std::async(std::launch::async, [&app](){ return app.exec(); });
+        mainloop->process();
+        app.quit();
+    } else {
+        mainloop->process();
+    }
+#else
+    if (!options.count("novis")){
+        cerr << "Appplications build without qt. Assuming --novis"
+    }
+    mainloop->process();
+#endif
 }

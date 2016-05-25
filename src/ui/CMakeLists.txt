@@ -9,6 +9,7 @@ IF(ENABLE_QT_SUPPORT)
         main.cpp
         gazergui.cpp
         workerthread.cpp
+        mainloop.cpp
         glimageview.cpp
         ${UI_HEADERS})
 
@@ -25,13 +26,26 @@ IF(ENABLE_QT_SUPPORT)
 ENDIF()
 
 
-SET(gazetool_hl
+SET(HEADLESS_SRC
     headless.cpp
     mainloop.cpp
     )
 
-ADD_EXECUTABLE(gazetool_hl headless.cpp mainloop.cpp)
-TARGET_LINK_LIBRARIES(gazetool_hl gazetool ${GAZETOOL_LIBS})
+SET(HEADLESS_LIBS
+    gazetool
+    ${GAZETOOL_LIBS})
+
+IF(ENABLE_QT_SUPPORT)
+  SET(HEADLESS_SRC ${HEADLESS_SRC} gazergui.cpp glimageview.cpp)
+  SET(HEADLESS_LIBS ${HEADLESS_LIBS} GL)
+ENDIF()
+
+
+ADD_EXECUTABLE(gazetool_hl ${HEADLESS_SRC})
+IF(ENABLE_QT_SUPPORT)
+  qt5_use_modules(gazetool_ui Core Widgets Gui OpenGL)
+ENDIF()
+TARGET_LINK_LIBRARIES(gazetool_hl ${HEADLESS_LIBS})
 
 INSTALL(TARGETS gazetool_hl
   RUNTIME DESTINATION bin
