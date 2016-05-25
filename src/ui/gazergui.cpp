@@ -103,7 +103,7 @@ WorkerAdapter::WorkerAdapter(std::shared_ptr<WorkerThread> worker_, QObject *par
 }
 
 void WorkerAdapter::process(){
-  worker->process();
+    worker->process();
 }
 
 void WorkerAdapter::stop() {

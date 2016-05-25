@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 INCLUDE_DIRECTORIES(${GAZETOOL_INCLUDES})
 
-SET(GAZETOOL_SRC main.cpp workerthread.cpp)
+SET(GAZETOOL_SRC main.cpp)
 SET(GAZETOOL_LIBS gazetool ${GAZETOOL_LIBS})
 
 IF(ENABLE_QT_SUPPORT)

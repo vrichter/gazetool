@@ -10,7 +10,7 @@
 #include <QThread>
 #include "gazergui.h"
 #endif
-#include "workerthread.h"
+#include "../lib/workerthread.h"
 
 using namespace std;
 

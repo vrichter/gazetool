@@ -4,7 +4,7 @@
 #include <QObject>
 
 #include "../lib/gazehyps.h"
-#include "workerthread.h"
+#include "../lib/workerthread.h"
 
 namespace Ui {
     class GazerGui;

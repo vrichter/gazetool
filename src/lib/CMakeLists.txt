@@ -18,6 +18,8 @@ SET(GAZETOOL_LIB_SRC
     abstractlearner.cpp
     rlssmoother.cpp
     blockingqueue.h
+    workerthread.cpp
+    workerthread.h
 )
 
 IF(ENABLE_YARP_SUPPORT)
