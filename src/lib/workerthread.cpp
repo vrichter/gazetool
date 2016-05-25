@@ -21,10 +21,6 @@
 #include "../lib/eyepatcher.h"
 #include "../lib/rlssmoother.h"
 
-#ifdef ENABLE_YARP_SUPPORT
-    #include "../lib/yarpsupport.h"
-#endif
-
 using namespace std;
 using namespace boost::accumulators;
 
@@ -185,12 +181,6 @@ void WorkerThread::process() {
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
     RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
     statusSubject.notify("Detector threads started");
-#ifdef ENABLE_YARP_SUPPORT
-    unique_ptr<YarpSender> yarpSender;
-    if (inputType == "port") {
-        yarpSender.reset(new YarpSender(inputParam));
-    }
-#endif
     ofstream ppmout;
     if (!streamppm.empty()) {
         ppmout.open(streamppm);
@@ -246,9 +236,6 @@ void WorkerThread::process() {
         dumpPpm(ppmout, frame);
         dumpEst(estimateout, gazehyps);
         if (showstats) temporalStats.printStats(gazehyps);
-#ifdef ENABLE_YARP_SUPPORT
-        if (yarpSender) yarpSender->sendGazeHypotheses(gazehyps);
-#endif
         imageProcessedSubject.notify(gazehyps);
         if (limitFps > 0) {
             usleep(static_cast<unsigned int>(1e6/limitFps));

@@ -11,6 +11,7 @@
 #include "gazergui.h"
 #endif
 #include "../lib/workerthread.h"
+#include "../lib/resultpublisher.h"
 
 using namespace std;
 
@@ -78,6 +79,10 @@ po::variables_map parse_options(int argc, char** argv){
                                                                               "list 0' for more information")
             ("size", po::value<string>(), "request image size arg and scale if required")
             ("fps", po::value<int>(), "request video with arg frames per second");
+    po::options_description outopts("output options");
+    outopts.add_options()
+            ("rsb", po::value<string>(), "publish results via rsb scope arg")
+            ("port", po::value<string>(), "publish results via yarp port arg");
     po::options_description classifyopts("classification options");
     classifyopts.add_options()
             ("classify-gaze", po::value<string>(), "load classifier from arg")
@@ -99,7 +104,7 @@ po::variables_map parse_options(int argc, char** argv){
             ("svm-epsilon-insensitivity", po::value<double>(), "svmr insensitivity parameter")
             ("feature-set", po::value<string>(), "use feature set arg")
             ("pca-epsilon", po::value<double>(), "pca dimension reduction depending on arg");
-    allopts.add(desc).add(inputops).add(classifyopts).add(trainopts);
+    allopts.add(desc).add(inputops).add(outopts).add(classifyopts).add(trainopts);
     try {
         po::store(po::parse_command_line(argc, argv, allopts), options);
     } catch(po::error& e) {
@@ -166,10 +171,27 @@ void set_options(GazerGui& gui, po::variables_map& options){
 }
 #endif
 
+std::vector<std::shared_ptr<ResultPublisher>> create_publishers(WorkerThread& worker, po::variables_map& options){
+  std::vector<std::shared_ptr<ResultPublisher>> result;
+  for (auto publisher : {"port", "rsb"}) {
+    if(options.count(publisher)){
+      auto ptr = std::shared_ptr<ResultPublisher>(
+            std::move(ResultPublisher::create(publisher,options[publisher].as<std::string>())));
+      result.push_back(ptr);
+      worker.imageProcessedSignal().connect(
+            [ptr] (GazeHypsPtr gazehyps) { ptr -> publish(gazehyps); }
+      );
+    }
+  }
+  return result;
+}
+
 int main(int argc, char** argv) {
     auto worker = std::make_shared<WorkerThread>();
     auto options = parse_options(argc,argv);
     set_options(*worker,options);
+
+    auto publishers = create_publishers(*worker,options);
 
     // gui mode
     if (!options.count("novis")){

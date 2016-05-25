@@ -21,6 +21,8 @@ SET(GAZETOOL_LIB_SRC
     workerthread.cpp
     workerthread.h
     subject.h
+    resultpublisher.h
+    resultpublisher.cpp
 )
 
 IF(ENABLE_YARP_SUPPORT)
