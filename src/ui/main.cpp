@@ -74,14 +74,8 @@ po::variables_map parse_options(int argc, char** argv){
             ("mirror", "mirror output");
     po::options_description inputops("input options");
     inputops.add_options()
-            ("camera,c", po::value<string>(), "use camera number arg")
-            ("video,v", po::value<string>(), "process video file arg")
-            ("image,i", po::value<string>(), "process single image arg")
-            ("port,p", po::value<string>(), "expect image on yarp port arg")
-            ("rsb,r", po::value<string>(), "expect images via rsb from scope arg")
-            ("rsb-socket,s", po::value<string>(), "expect images via rsb (socket communication) from scope arg")
-            ("ros,o", po::value<string>(), "expect images via ros topic arg")
-            ("batch,b", po::value<string>(), "batch process image filenames from arg")
+            ("input,i", po::value<std::vector<std::string> >()->multitoken(), "input type and parameter. use '--input "
+                                                                              "list 0' for more information")
             ("size", po::value<string>(), "request image size arg and scale if required")
             ("fps", po::value<int>(), "request video with arg frames per second");
     po::options_description classifyopts("classification options");
@@ -121,19 +115,15 @@ po::variables_map parse_options(int argc, char** argv){
 }
 
 void set_options(WorkerThread& worker, po::variables_map& options){
-    for (const auto& s : { "camera", "image", "video", "port", "batch", "rsb", "rsb-socket", "ros"}) {
-        if (options.count(s)) {
-            if (worker.inputType.empty()) {
-                worker.inputParam = options[s].as<string>();
-                worker.inputType = s;
-            } else {
-                throw po::error("More than one input option provided");
-            }
-        }
+    if (options["input"].empty()){
+        throw po::error("No input option provided. Try --input list 0 for a list of possible sources.");
     }
-    if (worker.inputType.empty()) {
-        throw po::error("No input option provided");
+    auto input = options["input"].as<std::vector<std::string>>();
+    if(input.size() != 2) {
+        throw po::error("input option requires 2 arguments. Try --input list 0 for a list of possible configurations.");
     }
+    worker.inputType = input[0];
+    worker.inputParam = input[1];
     if (options.count("size")) {
         auto sizestr = options["size"].as<string>();
         vector<string> args;
