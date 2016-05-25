@@ -32,13 +32,13 @@ public:
                                                  const cv::Size& desired_size=cv::Size(),
                                                  const int desired_fps=0);
 
-    static void registerImageProvider(const std::string& id, FactoryFunction function);
+    static void registerImageProvider(const std::string& id, FactoryFunction function, const std::string& description);
 
     class StaticRegistrar {
     public:
-        StaticRegistrar(const std::string& id, FactoryFunction function){
+        StaticRegistrar(const std::string& id, FactoryFunction function, const std::string& description){
             try {
-                ImageProvider::registerImageProvider(id,function);
+                ImageProvider::registerImageProvider(id,function,description);
             } catch (std::runtime_error& e) {
                 std::cerr << "WARNING: "<< e.what() << std::endl;
             }

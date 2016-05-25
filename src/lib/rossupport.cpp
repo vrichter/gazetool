@@ -150,6 +150,7 @@ static ImageProvider::StaticRegistrar rosgrabber(
     "ros",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(new RosImageProvider(params,1));
-    }
+    },
+    "arg = ros topic"
 );
 } // anonymus namespace

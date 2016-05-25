@@ -139,13 +139,13 @@ string BatchImageProvider::getId()
 
 struct ImageProviderRegister {
   std::mutex mutex;
-  std::map<std::string,ImageProvider::FactoryFunction> map;
+  std::map<std::string,std::pair<ImageProvider::FactoryFunction,std::string>> map;
 
-  void add(const std::string& id, ImageProvider::FactoryFunction function){
+  void add(const std::string& id, ImageProvider::FactoryFunction function,const std::string& description){
     std::lock_guard<std::mutex> lock(mutex);
     auto it = map.find(id);
     if(it == map.end()){
-      map[id] = function;
+      map[id] = std::make_pair(function,description);
     } else {
       throw runtime_error("ImageProvider '" + id + "' already registered");
     }
@@ -155,20 +155,41 @@ struct ImageProviderRegister {
     std::lock_guard<std::mutex> lock(mutex);
     auto it = map.find(id);
     if(it != map.end()){
-      return it->second;
+      return it->second.first;
     } else {
       throw runtime_error("unknown ImageProvider '" + id + "'.");
     }
   }
 
+  std::string description(){
+    std::lock_guard<std::mutex> lock(mutex);
+    int length = 0;
+    for(auto it : map){
+      if (it.first.size() > length){
+        length = it.first.size();
+      }
+    }
+    std::stringstream builder;
+    builder << "The following image providers are available:\n";
+    for(auto it : map){
+      builder << "\t" << it.first;
+      for(uint i = it.first.size(); i < length; ++i){
+        builder << " ";
+      }
+      builder << "  arg    " << it.second.second << "\n";
+    }
+    return builder.str();
+  }
 };
 
 namespace { // do not clutter namespace
   static ImageProviderRegister IPREG;
 }
 
-void ImageProvider::registerImageProvider(const std::string& id, ImageProvider::FactoryFunction function){
-    IPREG.add(id,function);
+void ImageProvider::registerImageProvider(const std::string& id, ImageProvider::FactoryFunction function,
+                                          const string& description)
+{
+    IPREG.add(id,function,description);
 }
 
 std::unique_ptr<ImageProvider>
@@ -185,19 +206,23 @@ static ImageProvider::StaticRegistrar camera(
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(
             new CvVideoImageProvider(boost::lexical_cast<int>(params), desired_size, desired_fps));
-    }
+    },
+    "arg = opencv camera id"
 );
 static ImageProvider::StaticRegistrar video(
     "video",
     [](const std::string& params, const cv::Size& desired_size, const int desired_fps){
       return std::unique_ptr<ImageProvider>(new CvVideoImageProvider(params, desired_size));
-    }
+    },
+    "arg = video filename"
 );
 static ImageProvider::StaticRegistrar batch(
     "batch",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(new BatchImageProvider(params));
-    }
+    },
+    "arg = batchfile filename."
+
 );
 static ImageProvider::StaticRegistrar image(
     "image",
@@ -205,6 +230,18 @@ static ImageProvider::StaticRegistrar image(
       std::vector<std::string> filenames;
       filenames.push_back(params);
       return std::unique_ptr<ImageProvider>(new BatchImageProvider(filenames));
-    }
+    },
+    "arg = image filename"
+
+);
+static ImageProvider::StaticRegistrar list(
+    "list",
+    [](const std::string& params, const cv::Size& desired_size,const int desired_fps)
+    -> std::unique_ptr<ImageProvider>
+    {
+      std::cout << IPREG.description() << std::endl;
+      throw runtime_error("List input cannot be used as image provider.");
+    },
+    "arg = _ignored_. This input device only prints known devices and throws."
 );
 } // anonymus namespace

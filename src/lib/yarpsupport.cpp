@@ -101,3 +101,13 @@ YarpSender::~YarpSender()
     port.close();
     yarp.fini();
 }
+
+namespace { // register image providers, do not clutter namespace
+static ImageProvider::StaticRegistrar yarp(
+    "port",
+    [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
+      return std::unique_ptr<ImageProvider>(new YarpImageProvider(params));
+    },
+    "arg = yarp port"
+);
+} // anonymus namespace

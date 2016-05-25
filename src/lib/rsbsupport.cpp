@@ -118,12 +118,14 @@ static ImageProvider::StaticRegistrar rsbgrabber(
     "rsb",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(new RsbImageProvider(params,1,false));
-    }
+    },
+    "arg = rsb scope (default transport config)"
 );
 static ImageProvider::StaticRegistrar rsbsocketgrabber(
     "rsb-socket",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(new RsbImageProvider(params,1,true));
-    }
+    },
+    "arg = rsb scope (uses socket communication)"
 );
 } // anonymus namespace
