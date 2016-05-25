@@ -278,7 +278,7 @@ void WorkerThread::process() {
         imageProcessedSubject.notify(gazehyps);
         //TODO: QCoreApplication::processEvents();
         if (limitFps > 0) {
-            usleep((unsigned int) 1e6/limitFps);
+            usleep(static_cast<unsigned int>(1e6/limitFps));
         }
         regressionWorker.hypsqueue().pop();
     }
