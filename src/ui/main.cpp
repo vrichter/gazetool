@@ -78,7 +78,9 @@ po::variables_map parse_options(int argc, char** argv){
             ("video,v", po::value<string>(), "process video file arg")
             ("image,i", po::value<string>(), "process single image arg")
             ("port,p", po::value<string>(), "expect image on yarp port arg")
-            ("rsb,r", po::value<string>(), "expect images via rsb from uri arg")
+            ("rsb,r", po::value<string>(), "expect images via rsb from scope arg")
+            ("rsb-socket,s", po::value<string>(), "expect images via rsb (socket communication) from scope arg")
+            ("ros,o", po::value<string>(), "expect images via ros topic arg")
             ("batch,b", po::value<string>(), "batch process image filenames from arg")
             ("size", po::value<string>(), "request image size arg and scale if required")
             ("fps", po::value<int>(), "request video with arg frames per second");
@@ -119,7 +121,7 @@ po::variables_map parse_options(int argc, char** argv){
 }
 
 void set_options(WorkerThread& worker, po::variables_map& options){
-    for (const auto& s : { "camera", "image", "video", "port", "batch", "rsb"}) {
+    for (const auto& s : { "camera", "image", "video", "port", "batch", "rsb", "rsb-socket", "ros"}) {
         if (options.count(s)) {
             if (worker.inputType.empty()) {
                 worker.inputParam = options[s].as<string>();
