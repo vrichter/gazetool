@@ -6,11 +6,21 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
+
+
 
 class ImageProvider
 {
 public:
     enum InputFormat {CAMERA, VIDEO, BATCH};
+
+    typedef std::function<std::unique_ptr<ImageProvider>(
+        const std::string&,
+        const cv::Size,
+        const int)
+    > FactoryFunction;
+
 
     virtual ~ImageProvider() {}
     virtual bool get(cv::Mat& frame) = 0;
@@ -21,6 +31,20 @@ public:
                                                  const std::string& params,
                                                  const cv::Size& desired_size=cv::Size(),
                                                  const int desired_fps=0);
+
+    static void registerImageProvider(const std::string& id, FactoryFunction function);
+
+    class StaticRegistrar {
+    public:
+        StaticRegistrar(const std::string& id, FactoryFunction function){
+            try {
+                ImageProvider::registerImageProvider(id,function);
+            } catch (std::runtime_error& e) {
+                std::cerr << "WARNING: "<< e.what() << std::endl;
+            }
+        }
+    };
+
 protected:
     cv::Mat image;
     InputFormat inputFormat;
