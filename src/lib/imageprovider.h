@@ -5,6 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <vector>
+#include <memory>
 
 class ImageProvider
 {
@@ -15,6 +16,11 @@ public:
     virtual bool get(cv::Mat& frame) = 0;
     virtual std::string getLabel() = 0;
     virtual std::string getId() = 0;
+
+    static std::unique_ptr<ImageProvider> create(const std::string& type,
+                                                 const std::string& params,
+                                                 const cv::Size& desired_size=cv::Size(),
+                                                 const int desired_fps=0);
 protected:
     cv::Mat image;
     InputFormat inputFormat;

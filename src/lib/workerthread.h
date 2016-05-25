@@ -19,7 +19,6 @@ private:
     Subject<GazeHypsPtr> imageProcessedSubject;
     Subject<std::string> statusSubject;
 
-    std::unique_ptr<ImageProvider> getImageProvider();
     void normalizeMat(const cv::Mat &in, cv::Mat &out);
     void dumpPpm(std::ofstream &fout, const cv::Mat &frame);
     void dumpEst(std::ofstream &fout, GazeHypsPtr gazehyps);

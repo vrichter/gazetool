@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 using namespace std;
@@ -135,3 +136,29 @@ string BatchImageProvider::getId()
     return "";
 }
 
+std::unique_ptr<ImageProvider>
+ImageProvider::create(const std::string& type, const std::string& params,
+                      const cv::Size& desired_size, const int desired_fps)
+{
+    std::unique_ptr<ImageProvider> imgProvider;
+    if (type == "camera") {
+        imgProvider.reset(new CvVideoImageProvider(boost::lexical_cast<int>(params), desired_size, desired_fps));
+    } else if (type == "video") {
+        imgProvider.reset(new CvVideoImageProvider(params, desired_size));
+    } else if (type == "batch") {
+        imgProvider.reset(new BatchImageProvider(params));
+    } else if (type == "image") {
+        vector<string> filenames;
+        filenames.push_back(params);
+        imgProvider.reset(new BatchImageProvider(filenames));
+    } else if (type == "port") {
+#ifdef ENABLE_YARP_SUPPORT
+        imgProvider.reset(new YarpImageProvider(params));
+#else
+        throw runtime_error("yarp support not enabled");
+#endif
+    } else {
+        throw runtime_error("invalid input type '" + type + "'");
+    }
+    return imgProvider;
+}

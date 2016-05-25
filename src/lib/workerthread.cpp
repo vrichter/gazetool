@@ -67,32 +67,6 @@ public:
 
 WorkerThread::WorkerThread() = default;
 
-
-std::unique_ptr<ImageProvider> WorkerThread::getImageProvider() {
-    std::unique_ptr<ImageProvider> imgProvider;
-    if (inputType == "port") {
-#ifdef ENABLE_YARP_SUPPORT
-        imgProvider.reset(new YarpImageProvider(inputParam));
-#else
-        throw runtime_error("yarp support not enabled");
-#endif
-    } else if (inputType == "camera") {
-        imgProvider.reset(new CvVideoImageProvider(boost::lexical_cast<int>(inputParam), inputSize, desiredFps));
-    } else if (inputType == "video") {
-        imgProvider.reset(new CvVideoImageProvider(inputParam, inputSize));
-    } else if (inputType == "batch") {
-        imgProvider.reset(new BatchImageProvider(inputParam));
-    } else if (inputType == "image") {
-        vector<string> filenames;
-        filenames.push_back(inputParam);
-        imgProvider.reset(new BatchImageProvider(filenames));
-    } else {
-        throw runtime_error("invalid input type " + inputType);
-    }
-    return imgProvider;
-}
-
-
 void WorkerThread::normalizeMat(const cv::Mat& in, cv::Mat& out) {
     cv::Scalar avg, sdv;
     cv::meanStdDev(in, avg, sdv);
@@ -206,7 +180,7 @@ void WorkerThread::process() {
     tryLoadModel(rellearner, estimateLid);
     tryLoadModel(vglearner, estimateVerticalGaze);
     statusSubject.notify("Setting up detector threads...");
-    std::unique_ptr<ImageProvider> imgProvider(getImageProvider());
+    std::unique_ptr<ImageProvider> imgProvider(ImageProvider::create(inputType,inputParam,inputSize,desiredFps));
     FaceDetectionWorker faceworker(std::move(imgProvider), threadcount);
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
     RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
