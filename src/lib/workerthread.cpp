@@ -276,7 +276,6 @@ void WorkerThread::process() {
         if (yarpSender) yarpSender->sendGazeHypotheses(gazehyps);
 #endif
         imageProcessedSubject.notify(gazehyps);
-        //TODO: QCoreApplication::processEvents();
         if (limitFps > 0) {
             usleep(static_cast<unsigned int>(1e6/limitFps));
         }

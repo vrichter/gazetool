@@ -4,6 +4,7 @@
 #include <QTextStream>
 #include <QSlider>
 #include <QCheckBox>
+#include <QCoreApplication>
 
 GazerGui::GazerGui(QWidget *parent) :
     QMainWindow(parent),
@@ -98,7 +99,11 @@ WorkerAdapter::WorkerAdapter(std::shared_ptr<WorkerThread> worker_, QObject *par
           [=] (void *) { emit finished(); }
     );
     worker->imageProcessedSignal().connect(
-          [=] (GazeHypsPtr gazehyps) { emit imageProcessed(gazehyps); }
+          [=] (GazeHypsPtr gazehyps)
+        {
+            emit imageProcessed(gazehyps);
+            QCoreApplication::processEvents();
+        }
     );
 }
 
@@ -108,7 +113,6 @@ void WorkerAdapter::process(){
 
 void WorkerAdapter::stop() {
     worker->stop();
-    std::cout << "stopping worker..." << std::endl;
 }
 
 void WorkerAdapter::setHorizGazeTolerance(double tol) {
