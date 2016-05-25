@@ -24,7 +24,23 @@ SET(GAZETOOL_LIB_SRC
 )
 
 IF(ENABLE_YARP_SUPPORT)
-    SET(GAZETOOL_LIB_SRC ${GAZETOOL_LIB_SRC} yarpsupport.cpp)
+    SET(GAZETOOL_LIB_SRC ${GAZETOOL_LIB_SRC}
+        yarpsupport.cpp
+    )
+ENDIF()
+
+IF(ENABLE_RSB_SUPPORT)
+    SET(GAZETOOL_LIB_SRC ${GAZETOOL_LIB_SRC}
+        rsbsupport.h
+        rsbsupport.cpp
+    )
+ENDIF()
+
+IF(ENABLE_ROS_SUPPORT)
+    SET(GAZETOOL_LIB_SRC ${GAZETOOL_LIB_SRC}
+        rossupport.h
+        rossupport.cpp
+    )
 ENDIF()
 
 INCLUDE_DIRECTORIES(${GAZETOOL_INCLUDES})
