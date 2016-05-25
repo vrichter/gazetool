@@ -178,13 +178,7 @@ int main(int argc, char** argv) {
     auto options = parse_options(argc,argv);
     set_options(*worker,options);
 
-    worker->statusSignal().connect(
-          [] (std::string message) {std::cerr << "status: " << message << std::endl;}
-    );
-    worker->finishedSignal().connect(
-          [] (void *) {std::cerr << "...finished..." << std::endl;}
-    );
-
+    // gui mode
     if (!options.count("novis")){
 #ifdef ENABLE_QT5
         qRegisterMetaType<GazeHypsPtr>();
@@ -222,6 +216,14 @@ int main(int argc, char** argv) {
         cerr << "Appplications build without qt. Assuming --novis"
 #endif
     }
+
+    // headless mode
+    worker->statusSignal().connect(
+          [] (std::string message) {std::cerr << "status: " << message << std::endl;}
+    );
+    worker->finishedSignal().connect(
+          [] (void *) {std::cerr << "...finished..." << std::endl;}
+    );
     worker->process();
     return 0;
 }
