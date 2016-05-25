@@ -117,18 +117,18 @@ po::variables_map parse_options(int argc, char** argv){
     return options;
 }
 
-void set_options(WorkerThread& mainloop, po::variables_map& options){
+void set_options(WorkerThread& worker, po::variables_map& options){
     for (const auto& s : { "camera", "image", "video", "port", "batch"}) {
         if (options.count(s)) {
-            if (mainloop.inputType.empty()) {
-                mainloop.inputParam = options[s].as<string>();
-                mainloop.inputType = s;
+            if (worker.inputType.empty()) {
+                worker.inputParam = options[s].as<string>();
+                worker.inputType = s;
             } else {
                 throw po::error("More than one input option provided");
             }
         }
     }
-    if (mainloop.inputType.empty()) {
+    if (worker.inputType.empty()) {
         throw po::error("No input option provided");
     }
     if (options.count("size")) {
@@ -136,28 +136,28 @@ void set_options(WorkerThread& mainloop, po::variables_map& options){
         vector<string> args;
         boost::split(args, sizestr, boost::is_any_of(":x "));
         if (args.size() != 2) throw po::error("invalid size " + sizestr);
-        mainloop.inputSize = cv::Size(boost::lexical_cast<int>(args[0]), boost::lexical_cast<int>(args[1]));
+        worker.inputSize = cv::Size(boost::lexical_cast<int>(args[0]), boost::lexical_cast<int>(args[1]));
     }
-    copy_check_arg(options,"fps", mainloop.desiredFps);
-    copy_check_arg(options,"threads", mainloop.threadcount);
-    copy_check_arg(options,"streamppm", mainloop.streamppm);
-    copy_check_arg(options,"model", mainloop.modelfile);
-    copy_check_arg(options,"classify-gaze", mainloop.classifyGaze);
-    copy_check_arg(options,"train-gaze-classifier", mainloop.trainGaze);
-    copy_check_arg(options,"train-lid-classifier", mainloop.trainLid);
-    copy_check_arg(options,"train-lid-estimator", mainloop.trainLidEstimator);
-    copy_check_arg(options,"classify-lid", mainloop.classifyLid);
-    copy_check_arg(options,"estimate-lid", mainloop.estimateLid);
-    copy_check_arg(options,"estimate-gaze", mainloop.estimateGaze);
-    copy_check_arg(options,"estimate-verticalgaze", mainloop.estimateVerticalGaze);
-    copy_check_arg(options,"train-gaze-estimator", mainloop.trainGazeEstimator);
-    copy_check_arg(options,"train-verticalgaze-estimator", mainloop.trainVerticalGazeEstimator);
-    copy_check_arg(options,"limitfps", mainloop.limitFps);
-    copy_check_arg(options,"dump-estimates", mainloop.dumpEstimates);
-    copy_check_arg(options,"horizontal-gaze-tolerance", mainloop.horizGazeTolerance);
-    copy_check_arg(options,"vertical-gaze-tolerance", mainloop.verticalGazeTolerance);
-    mainloop.trainingParameters = parse_training_options(options);
-    if (options.count("quiet")) mainloop.showstats = false;
+    copy_check_arg(options,"fps", worker.desiredFps);
+    copy_check_arg(options,"threads", worker.threadcount);
+    copy_check_arg(options,"streamppm", worker.streamppm);
+    copy_check_arg(options,"model", worker.modelfile);
+    copy_check_arg(options,"classify-gaze", worker.classifyGaze);
+    copy_check_arg(options,"train-gaze-classifier", worker.trainGaze);
+    copy_check_arg(options,"train-lid-classifier", worker.trainLid);
+    copy_check_arg(options,"train-lid-estimator", worker.trainLidEstimator);
+    copy_check_arg(options,"classify-lid", worker.classifyLid);
+    copy_check_arg(options,"estimate-lid", worker.estimateLid);
+    copy_check_arg(options,"estimate-gaze", worker.estimateGaze);
+    copy_check_arg(options,"estimate-verticalgaze", worker.estimateVerticalGaze);
+    copy_check_arg(options,"train-gaze-estimator", worker.trainGazeEstimator);
+    copy_check_arg(options,"train-verticalgaze-estimator", worker.trainVerticalGazeEstimator);
+    copy_check_arg(options,"limitfps", worker.limitFps);
+    copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
+    copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);
+    copy_check_arg(options,"vertical-gaze-tolerance", worker.verticalGazeTolerance);
+    worker.trainingParameters = parse_training_options(options);
+    if (options.count("quiet")) worker.showstats = false;
 }
 
 #ifdef ENABLE_QT5
