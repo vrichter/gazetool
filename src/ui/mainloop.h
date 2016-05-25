@@ -52,7 +52,6 @@ private:
     Signal m_Signal;
 };
 
-
 class MainLoop
 {
 private:

@@ -86,3 +86,38 @@ void GazerGui::on_smoothCheckBox_stateChanged(int state)
 {
     emit smoothingChanged(state == Qt::Checked);
 }
+
+WorkerAdapter::WorkerAdapter(std::shared_ptr<MainLoop> worker_, QObject *parent)
+  : QObject(parent), worker(worker_)
+
+{
+    worker->statusSignal().connect(
+          [=] (std::string message) { emit statusmsg(message); }
+    );
+    worker->finishedSignal().connect(
+          [=] (void *) { emit finished(); }
+    );
+    worker->imageProcessedSignal().connect(
+          [=] (GazeHypsPtr gazehyps) { emit imageProcessed(gazehyps); }
+    );
+}
+
+void WorkerAdapter::process(){
+  worker->process();
+}
+
+void WorkerAdapter::stop() {
+    worker->stop();
+}
+
+void WorkerAdapter::setHorizGazeTolerance(double tol) {
+    worker->setHorizGazeTolerance(tol);
+}
+
+void WorkerAdapter::setVerticalGazeTolerance(double tol){
+    worker->setVerticalGazeTolerance(tol);
+}
+
+void WorkerAdapter::setSmoothing(bool enabled){
+    worker->setSmoothing(enabled);
+}

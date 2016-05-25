@@ -303,4 +303,3 @@ void MainLoop::process() {
     finishedSubject.notify(nullptr);
     cerr << "Primary worker thread finished processing" << endl;
 }
-

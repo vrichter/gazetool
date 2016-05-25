@@ -1,7 +1,10 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QObject>
+
 #include "../lib/gazehyps.h"
+#include "mainloop.h"
 
 namespace Ui {
     class GazerGui;
@@ -37,4 +40,26 @@ private slots:
 private:
     Ui::GazerGui *ui;
     bool _mirror = false;
+};
+
+class WorkerAdapter : public QObject
+{
+    Q_OBJECT
+private:
+    std::shared_ptr<MainLoop> worker;
+
+public:
+    explicit WorkerAdapter(std::shared_ptr<MainLoop> worker, QObject *parent = 0);
+
+signals:
+    void finished();
+    void imageProcessed(GazeHypsPtr gazehyps);
+    void statusmsg(std::string msg);
+
+public slots:
+    void process();
+    void stop();
+    void setHorizGazeTolerance(double tol);
+    void setVerticalGazeTolerance(double tol);
+    void setSmoothing(bool enabled);
 };
