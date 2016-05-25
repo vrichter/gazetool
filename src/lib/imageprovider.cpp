@@ -184,16 +184,13 @@ static ImageProvider::StaticRegistrar camera(
     "camera",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(
-            new CvVideoImageProvider(boost::lexical_cast<int>(params), desired_size, desired_fps)
-            );
+            new CvVideoImageProvider(boost::lexical_cast<int>(params), desired_size, desired_fps));
     }
 );
 static ImageProvider::StaticRegistrar video(
     "video",
-    [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
-      return std::unique_ptr<ImageProvider>(
-            new CvVideoImageProvider(params, desired_size)
-            );
+    [](const std::string& params, const cv::Size& desired_size, const int desired_fps){
+      return std::unique_ptr<ImageProvider>(new CvVideoImageProvider(params, desired_size));
     }
 );
 static ImageProvider::StaticRegistrar batch(

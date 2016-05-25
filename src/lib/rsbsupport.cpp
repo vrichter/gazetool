@@ -112,3 +112,18 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
     informer->publish(faces);
 
 }
+
+namespace { // register image providers, do not clutter namespace
+static ImageProvider::StaticRegistrar rsbgrabber(
+    "rsb",
+    [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
+      return std::unique_ptr<ImageProvider>(new RsbImageProvider(params,1,false));
+    }
+);
+static ImageProvider::StaticRegistrar rsbsocketgrabber(
+    "rsb-socket",
+    [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
+      return std::unique_ptr<ImageProvider>(new RsbImageProvider(params,1,true));
+    }
+);
+} // anonymus namespace
