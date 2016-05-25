@@ -106,29 +106,6 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
         top_left->set_y(hyp.faceDetection.top());
         region->set_allocated_top_left(top_left);
         face->set_allocated_region(region);
-        if(hyp.isLidClosed){
-            face->set_is_lid_close(hyp.isLidClosed.get());
-        }
-        if(hyp.isMutualGaze){
-            face->set_is_mutual_gaze(hyp.isMutualGaze.get());
-        }
-        if(hyp.eyeLidClassification){
-            face->set_eye_lid_classification(hyp.eyeLidClassification.get());
-        }
-        if(hyp.mutualGazeClassification){
-            face->set_mutual_gaze_classification(hyp.mutualGazeClassification.get());
-        }
-        if(hyp.horizontalGazeEstimation){
-            face->set_horizontal_gaze_estimation(hyp.horizontalGazeEstimation.get());
-        }
-        if(hyp.verticalGazeEstimation){
-            face->set_vertical_gaze_estimation(hyp.verticalGazeEstimation.get());
-        }
-        if(hyp.innerLipFeatures){
-          for(auto feature : hyp.innerLipFeatures){
-            face->add_normalised_inner_lips_distances(feature);
-          }
-        }
     }
     faces->set_height(hyps->frame.rows);
     faces->set_width(hyps->frame.cols);
