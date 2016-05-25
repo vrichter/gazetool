@@ -3,60 +3,19 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <functional>
-#include <boost/signals2/signal.hpp>
 
-#include "../lib/imageprovider.h"
-#include "../lib/faceparts.h"
-#include "../lib/pupilfinder.h"
-#include "../lib/gazehyps.h"
-#include "../lib/abstractlearner.h"
-
-template<typename Data>
-class Signal {
-public:
-  typedef boost::signals2::connection  Connection;
-  typedef Data DataType;
-
-  virtual ~Signal() = default;
-  virtual Connection connect(std::function<void (Data)> subscriber) = 0;
-  virtual void disconnect(Connection subscriber) = 0;
-};
-
-template<typename Data>
-class Subject : public Signal<Data> {
-
-private:
-    typedef boost::signals2::signal<void (Data)> Signal;
-public:
-    typedef boost::signals2::connection  Connection;
-    typedef Data DataType;
-    typedef std::shared_ptr<Subject<Data>> Ptr;
-
-    Subject() = default;
-    virtual ~Subject() = default;
-
-    virtual Connection connect(std::function<void (Data)> subscriber) final {
-      return m_Signal.connect(subscriber);
-    }
-
-    virtual void disconnect(Connection subscriber) final {
-      subscriber.disconnect();
-    }
-
-    void notify(Data data) {
-      m_Signal(data);
-    }
-
-private:
-    Signal m_Signal;
-};
+#include "subject.h"
+#include "imageprovider.h"
+#include "faceparts.h"
+#include "pupilfinder.h"
+#include "gazehyps.h"
+#include "abstractlearner.h"
 
 class WorkerThread
 {
 private:
     bool shouldStop = false;
-    Subject<void*> finishedSubject;
+    Subject<std::nullptr_t> finishedSubject;
     Subject<GazeHypsPtr> imageProcessedSubject;
     Subject<std::string> statusSubject;
 
@@ -95,7 +54,7 @@ public:
     bool showstats = true;
     TrainingParameters trainingParameters;
 
-    Signal<void*>& finishedSignal() {
+    Signal<std::nullptr_t>& finishedSignal() {
       return finishedSubject;
     }
 

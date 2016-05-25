@@ -20,6 +20,7 @@ SET(GAZETOOL_LIB_SRC
     blockingqueue.h
     workerthread.cpp
     workerthread.h
+    subject.h
 )
 
 IF(ENABLE_YARP_SUPPORT)
