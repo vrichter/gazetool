@@ -52,35 +52,3 @@ ENDIF()
 add_subdirectory(src/lib)
 add_subdirectory(src/ui)
 add_subdirectory(data)
-
-#INCLUDE_DIRECTORIES(
-#    ${OpenCV_INCLUDE_DIRS}
-#    ${Boost_INCLUDE_DIR}
-#    ${YARP_INCLUDE_DIRS}
-#    ${dlib_INCLUDE_DIRS}
-#    src/lib
-#    src/ui)
-#
-#
-#QT5_WRAP_UI(UI_HEADERS src/ui/gazergui.ui)
-#
-#SET(GAZETOOL_BIN
-#    src/ui/main.cpp
-#    src/ui/gazergui.cpp
-#    src/ui/workerthread.cpp
-#    src/ui/glimageview.cpp
-#    ${UI_HEADERS})
-#
-#ADD_EXECUTABLE(gazetool_ui ${GAZETOOL_BIN})
-#
-##ADD_DEPENDENCIES(gazetool_ui ${UI_HEADERS})
-#TARGET_LINK_LIBRARIES(gazetool_ui gazetool GL)
-#qt5_use_modules(gazetool_ui Core Widgets Gui OpenGL)
-#
-#CONFIGURE_FILE("src/ui/config/gazetool.sh.in" gazetool.sh @ONLY)
-#
-#INSTALL(TARGETS gazetool_ui
-#  RUNTIME DESTINATION bin
-#)
-#
-#INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gazetool.sh DESTINATION bin)
