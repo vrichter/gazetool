@@ -4,7 +4,7 @@
 #include <QObject>
 
 #include "../lib/gazehyps.h"
-#include "mainloop.h"
+#include "workerthread.h"
 
 namespace Ui {
     class GazerGui;
@@ -42,14 +42,16 @@ private:
     bool _mirror = false;
 };
 
+Q_DECLARE_METATYPE(std::string)
+
 class WorkerAdapter : public QObject
 {
     Q_OBJECT
 private:
-    std::shared_ptr<MainLoop> worker;
+    std::shared_ptr<WorkerThread> worker;
 
 public:
-    explicit WorkerAdapter(std::shared_ptr<MainLoop> worker, QObject *parent = 0);
+    explicit WorkerAdapter(std::shared_ptr<WorkerThread> worker, QObject *parent = 0);
 
 signals:
     void finished();

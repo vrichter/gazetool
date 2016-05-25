@@ -6,7 +6,6 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
-#include <QCoreApplication>
 
 #include "../lib/imageprovider.h"
 #include "../lib/faceparts.h"
@@ -66,10 +65,7 @@ public:
 };
 
 
-WorkerThread::WorkerThread(QObject *parent) :
-    QObject(parent)
-{
-}
+WorkerThread::WorkerThread() = default;
 
 
 std::unique_ptr<ImageProvider> WorkerThread::getImageProvider() {
@@ -209,12 +205,12 @@ void WorkerThread::process() {
     tryLoadModel(rglearner, estimateGaze);
     tryLoadModel(rellearner, estimateLid);
     tryLoadModel(vglearner, estimateVerticalGaze);
-    emit statusmsg("Setting up detector threads...");
+    statusSubject.notify("Setting up detector threads...");
     std::unique_ptr<ImageProvider> imgProvider(getImageProvider());
     FaceDetectionWorker faceworker(std::move(imgProvider), threadcount);
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
     RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
-    emit statusmsg("Detector threads started");
+    statusSubject.notify("Detector threads started");
 #ifdef ENABLE_YARP_SUPPORT
     unique_ptr<YarpSender> yarpSender;
     if (inputType == "port") {
@@ -237,7 +233,7 @@ void WorkerThread::process() {
     RlsSmoother horizGazeSmoother;
     RlsSmoother vertGazeSmoother;
     RlsSmoother lidSmoother(5, 0.95, 0.09);
-    emit statusmsg("Entering processing loop...");
+    statusSubject.notify("Entering processing loop...");
     cerr << "Processing frames..." << endl;
     TemporalStats temporalStats;
     while(!shouldStop) {
@@ -279,8 +275,8 @@ void WorkerThread::process() {
 #ifdef ENABLE_YARP_SUPPORT
         if (yarpSender) yarpSender->sendGazeHypotheses(gazehyps);
 #endif
-        emit imageProcessed(gazehyps);
-        QCoreApplication::processEvents();
+        imageProcessedSubject.notify(gazehyps);
+        //TODO: QCoreApplication::processEvents();
         if (limitFps > 0) {
             usleep(1e6/limitFps);
         }
@@ -304,7 +300,6 @@ void WorkerThread::process() {
     if (rellearner.sampleCount() > 0) {
         rellearner.train(trainLidEstimator);
     }
-    emit finished();
+    finishedSubject.notify(nullptr);
     cerr << "Primary worker thread finished processing" << endl;
 }
-

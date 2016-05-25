@@ -87,7 +87,7 @@ void GazerGui::on_smoothCheckBox_stateChanged(int state)
     emit smoothingChanged(state == Qt::Checked);
 }
 
-WorkerAdapter::WorkerAdapter(std::shared_ptr<MainLoop> worker_, QObject *parent)
+WorkerAdapter::WorkerAdapter(std::shared_ptr<WorkerThread> worker_, QObject *parent)
   : QObject(parent), worker(worker_)
 
 {
@@ -108,6 +108,7 @@ void WorkerAdapter::process(){
 
 void WorkerAdapter::stop() {
     worker->stop();
+    std::cout << "stopping worker..." << std::endl;
 }
 
 void WorkerAdapter::setHorizGazeTolerance(double tol) {
