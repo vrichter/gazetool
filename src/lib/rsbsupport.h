@@ -4,7 +4,8 @@
 #include "gazehyps.h"
 
 #include <rsb/Informer.h>
-#include <rst/vision/Faces.pb.h>
+#include <rst/vision/FaceWithGazeCollection.pb.h>
+#include <rst/vision/FaceLandmarksCollection.pb.h>
 
 
 class RsbImageProvider : public ImageProvider
@@ -30,5 +31,6 @@ public:
     void sendGazeHypotheses(GazeHypsPtr hyps);
 
 private:
-    rsb::Informer<rst::vision::Faces>::Ptr informer;
+    rsb::Informer<rst::vision::FaceWithGazeCollection>::Ptr face_informer;
+    rsb::Informer<rst::vision::FaceLandmarksCollection>::Ptr landmark_informer;
 };
