@@ -211,7 +211,7 @@ void WorkerThread::process() {
     tryLoadModel(vglearner, estimateVerticalGaze);
     emit statusmsg("Setting up detector threads...");
     std::unique_ptr<ImageProvider> imgProvider(getImageProvider());
-    FaceDetectionWorker faceworker(std::move(imgProvider), threadcount, 10);
+    FaceDetectionWorker faceworker(std::move(imgProvider), threadcount, detectEveryXFrames);
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
     RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
     emit statusmsg("Detector threads started");

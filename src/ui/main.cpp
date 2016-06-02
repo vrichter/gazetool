@@ -80,7 +80,8 @@ private:
                 ("streamppm", po::value<string>(), "stream ppm files to arg. e.g. "
                                                    ">(ffmpeg -f image2pipe -vcodec ppm -r 30 -i - -r 30 -preset ultrafast out.mp4)")
                 ("dump-estimates", po::value<string>(), "dump estimated values to file")
-                ("mirror", "mirror output");
+                ("mirror", "mirror output")
+                ("detectEveryXFrames", po::value<int>(), "detect every x frame, track the rest. Input <=1 represent only detection");
         po::options_description inputops("input options");
         inputops.add_options()
                 ("camera,c", po::value<string>(), "use camera number arg")
@@ -141,6 +142,7 @@ private:
             }
             copyCheckArg("fps", worker.desiredFps);
             copyCheckArg("threads", worker.threadcount);
+            copyCheckArg("detectEveryXFrames", worker.detectEveryXFrames);
             copyCheckArg("streamppm", worker.streamppm);
             copyCheckArg("model", worker.modelfile);
             copyCheckArg("classify-gaze", worker.classifyGaze);

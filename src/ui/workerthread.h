@@ -31,6 +31,7 @@ public:
     explicit WorkerThread(QObject *parent = 0);
     int threadcount = 6;
     int desiredFps = 0;
+    int detectEveryXFrames = 0;
     cv::Size inputSize;
     std::string inputType;
     std::string inputParam;
