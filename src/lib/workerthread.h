@@ -47,6 +47,7 @@ public:
     std::string estimateLid;
     std::string dumpEstimates;
     double limitFps = 0;
+    int detectEveryXFrames = -1;
     double horizGazeTolerance = 5;
     double verticalGazeTolerance = 5;
     bool smoothingEnabled = false;
