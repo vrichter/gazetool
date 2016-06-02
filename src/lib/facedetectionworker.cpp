@@ -41,8 +41,8 @@ void FaceDetectionWorker::detectfaces() {
     try {
         while (true) {
             GazeHypsPtr gazehyps = _workqueue.pop();
-
-            if (_detectEachXFrame == -1) {
+            std::cout << trackers.size() << std::endl;
+            if (_detectEachXFrame <= 1) {
                 const auto faceDetections = detector(gazehyps->dlibimage);
                 for (const auto& facerect : faceDetections) {
                     faceDetected = true;
@@ -51,7 +51,8 @@ void FaceDetectionWorker::detectfaces() {
                     gazehyps->addGazeHyp(ghyp);
                 }
             } else {
-                if (!faceDetected || _detectEachXFrame == 0) {
+                if (!faceDetected) {
+                    std::cout << "DETECT" << std::endl;
                     const auto faceDetections = detector(gazehyps->dlibimage);
                     for (const auto& facerect : faceDetections) {
                         faceDetected = true;
@@ -64,6 +65,7 @@ void FaceDetectionWorker::detectfaces() {
 
                     }
                 } else {
+                    std::cout << "TRACK" << std::endl;
                     trackCounter++;
                     for (auto& tracker : trackers) {
                         GazeHyp ghyp(*gazehyps);
