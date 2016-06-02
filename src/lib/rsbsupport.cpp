@@ -169,8 +169,6 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
     rsb::EventPtr faceLandmarksEvent = landmark_informer->createEvent();
     faceLandmarksEvent->setData(faceLandmarks);
     faceLandmarksEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
-    std::cout << facesEvent->getMetaData() << std::endl;
-    std::cout << faceLandmarksEvent->getMetaData() << std::endl;
     face_informer->publish(facesEvent);
     landmark_informer->publish(faceLandmarksEvent);
 }
