@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8)
 
 INCLUDE_DIRECTORIES(${GAZETOOL_INCLUDES})
 
+# add library install path to rpath
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+
 SET(GAZETOOL_SRC main.cpp)
 SET(GAZETOOL_LIBS gazetool ${GAZETOOL_LIBS})
 
