@@ -30,7 +30,6 @@ public:
     explicit WorkerThread();
     int threadcount = 6;
     int desiredFps = 0;
-    int detectEveryXFrames = 0;
     cv::Size inputSize;
     std::string inputType;
     std::string inputParam;
@@ -48,7 +47,7 @@ public:
     std::string estimateLid;
     std::string dumpEstimates;
     double limitFps = 0;
-    int detectEveryXFrames = -1;
+    int detectEveryXFrames = 0;
     double horizGazeTolerance = 5;
     double verticalGazeTolerance = 5;
     bool smoothingEnabled = false;

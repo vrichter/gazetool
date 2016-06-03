@@ -139,7 +139,7 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     }
     copy_check_arg(options,"fps", worker.desiredFps);
     copy_check_arg(options,"threads", worker.threadcount);
-    copyCheckArg("detectEveryXFrames", worker.detectEveryXFrames);
+    copy_check_arg(options,"detectEveryXFrames", worker.detectEveryXFrames);
     copy_check_arg(options,"streamppm", worker.streamppm);
     copy_check_arg(options,"model", worker.modelfile);
     copy_check_arg(options,"classify-gaze", worker.classifyGaze);

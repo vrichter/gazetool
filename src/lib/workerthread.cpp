@@ -7,19 +7,19 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 
-#include "lib/imageprovider.h"
-#include "lib/faceparts.h"
-#include "lib/pupilfinder.h"
-#include "lib/mutualgazelearner.h"
-#include "lib/verticalgazelearner.h"
-#include "lib/eyelidlearner.h"
-#include "lib/relativeeyelidlearner.h"
-#include "lib/relativegazelearner.h"
-#include "lib/facedetectionworker.h"
-#include "lib/shapedetectionworker.h"
-#include "lib/regressionworker.h"
-#include "lib/eyepatcher.h"
-#include "lib/rlssmoother.h"
+#include "imageprovider.h"
+#include "faceparts.h"
+#include "pupilfinder.h"
+#include "mutualgazelearner.h"
+#include "verticalgazelearner.h"
+#include "eyelidlearner.h"
+#include "relativeeyelidlearner.h"
+#include "relativegazelearner.h"
+#include "facedetectionworker.h"
+#include "shapedetectionworker.h"
+#include "regressionworker.h"
+#include "eyepatcher.h"
+#include "rlssmoother.h"
 
 using namespace std;
 using namespace boost::accumulators;
