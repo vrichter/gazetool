@@ -69,11 +69,11 @@ po::variables_map parse_options(int argc, char** argv){
             ("novis", "do not display frames")
             ("quiet,q", "do not print statistics")
             ("limitfps", po::value<double>(), "slow down display fps to arg")
-            ("track", po::value<int>()->default_value(-1), "detect faces every arg frames. track in between.")
             ("streamppm", po::value<string>(), "stream ppm files to arg. e.g. "
                                                ">(ffmpeg -f image2pipe -vcodec ppm -r 30 -i - -r 30 -preset ultrafast out.mp4)")
             ("dump-estimates", po::value<string>(), "dump estimated values to file")
             ("mirror", "mirror output");
+            ("detectEveryXFrames", po::value<int>(), "detect every x frame, track the rest. Input <=1 represent only detection");
     po::options_description inputops("input options");
     inputops.add_options()
             ("input,i", po::value<std::vector<std::string> >()->multitoken(), "input type and parameter. use '--input "
@@ -139,6 +139,7 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     }
     copy_check_arg(options,"fps", worker.desiredFps);
     copy_check_arg(options,"threads", worker.threadcount);
+    copyCheckArg("detectEveryXFrames", worker.detectEveryXFrames);
     copy_check_arg(options,"streamppm", worker.streamppm);
     copy_check_arg(options,"model", worker.modelfile);
     copy_check_arg(options,"classify-gaze", worker.classifyGaze);
@@ -152,7 +153,6 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     copy_check_arg(options,"train-gaze-estimator", worker.trainGazeEstimator);
     copy_check_arg(options,"train-verticalgaze-estimator", worker.trainVerticalGazeEstimator);
     copy_check_arg(options,"limitfps", worker.limitFps);
-    copy_check_arg(options,"track", worker.detectEveryXFrames);
     copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
     copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);
     copy_check_arg(options,"vertical-gaze-tolerance", worker.verticalGazeTolerance);

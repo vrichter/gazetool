@@ -41,8 +41,7 @@ void FaceDetectionWorker::detectfaces() {
     try {
         while (true) {
             GazeHypsPtr gazehyps = _workqueue.pop();
-
-            if (_detectEachXFrame == -1) {
+            if (_detectEachXFrame <= 1) {
                 const auto faceDetections = detector(gazehyps->dlibimage);
                 for (const auto& facerect : faceDetections) {
                     faceDetected = true;
@@ -51,7 +50,7 @@ void FaceDetectionWorker::detectfaces() {
                     gazehyps->addGazeHyp(ghyp);
                 }
             } else {
-                if (!faceDetected || _detectEachXFrame == 0) {
+                if (!faceDetected) {
                     const auto faceDetections = detector(gazehyps->dlibimage);
                     for (const auto& facerect : faceDetections) {
                         faceDetected = true;
