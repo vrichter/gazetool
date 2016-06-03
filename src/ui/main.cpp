@@ -72,8 +72,8 @@ po::variables_map parse_options(int argc, char** argv){
             ("streamppm", po::value<string>(), "stream ppm files to arg. e.g. "
                                                ">(ffmpeg -f image2pipe -vcodec ppm -r 30 -i - -r 30 -preset ultrafast out.mp4)")
             ("dump-estimates", po::value<string>(), "dump estimated values to file")
-            ("mirror", "mirror output");
-            ("detectEveryXFrames", po::value<int>(), "detect every x frame, track the rest. Input <=1 represent only detection");
+            ("mirror", "mirror output")
+            ("detect-every-x-frames", po::value<int>(), "detect every x frame, track the rest. Input <=1 represent only detection");
     po::options_description inputops("input options");
     inputops.add_options()
             ("input,i", po::value<std::vector<std::string> >()->multitoken(), "input type and parameter. use '--input "
@@ -139,7 +139,7 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     }
     copy_check_arg(options,"fps", worker.desiredFps);
     copy_check_arg(options,"threads", worker.threadcount);
-    copy_check_arg(options,"detectEveryXFrames", worker.detectEveryXFrames);
+    copy_check_arg(options,"detect-every-x-frames", worker.detectEveryXFrames);
     copy_check_arg(options,"streamppm", worker.streamppm);
     copy_check_arg(options,"model", worker.modelfile);
     copy_check_arg(options,"classify-gaze", worker.classifyGaze);
