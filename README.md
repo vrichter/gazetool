@@ -19,29 +19,60 @@ Compiling
 * run `make install`
 
 ## Running gazetool
-* Run `gazetool.sh -c 0` to use the first webcam attached to your system
+* Run `gazetool.sh -i camera 0` to use the first webcam attached to your system
+* Run `gazetool.sh -i list 0` to list all available image providers
 
-## Manual library installation (no QT is needed)
+## Library
 
-Make sure you have the following dependencies available / installed:
-* opencv: http://opencv.org/downloads.html
-* boost: http://www.boost.org/
-* dlib: http://dlib.net/
-* run `getFaceAlignmentModel.sh` in the `data` directory to download dlib's face alignment model which is required for running gazetool.
+This project provides a cmake module file which is created in `${CMAKE_INSTALL_PREFIX}/lib/cmake/gazetool` and can be used to link against the  library.
 
-Compiling
-* cmake is used, thus a standard cmake configure run is required in the data and the src/lib folder
-* `cd data`
-* `mkdir build && cd build && cmake ..`
-* run `make`
-* run `make install`
-* `cd ../../src/lib`
-* `mkdir build && cd build && cmake ..`
-* run `make`
-* run `make install`
+See [main.cpp](./src/ui/main.cpp) and [workerthread.h](./src/lib/workerthread.h) for a usage example.
 
-This will install the library and all necessary configuration files to use it.
-Furthermore a cmake module file is created in `${CMAKE_INSTALL_PREFIX}/lib/cmake/gazetool` which can be used to link against this library.
+## Build options
+
+The following options can be passed to cmake via the -D parameter:
+
+###### ENABLE_QT_SUPPORT=OFF
+
+Removes the qt dependency. The demo application will run without a gui.
+
+###### ENABLE_RSB_SUPPORT=ON
+
+Adds dependencies:
+* rsb: https://code.cor-lab.org/projects/rsb
+* rst (0.13.7+): https://code.cor-lab.org/projects/rst
+
+Adds image providers:
+* rsb <scope>: receive images via rsb on `scope`
+* rsb-socket <scope>: receive images via rsb on `scope`, enforce socket
+  communication
+
+Adds publisher:
+* --rsb <scope>: publishes classification results via rsb
+
+###### ENABLE_YARP_SUPPORT=ON
+
+Adds dependencies:
+* yarp: http://www.yarp.it/
+
+Adds image provider:
+* port <port>: receive images via yarp port `port/in`
+
+Adds publisher:
+* --port <port>: publishes classification results via yarp port `port/out`
+
+###### ENABLE_ROS_SUPPORT=ON
+
+Adds dependencies:
+* ros http://www.ros.org/ packages:
+  * roscpp
+  * std_msgs
+  * sensor_msgs
+  * image_transport
+  * cv_bridge
+
+Adds image provider:
+* ros <topic>: receive images via ros topic `topic`
 
 ## Technical Notes
 
