@@ -17,6 +17,7 @@ class GazerGui : public QMainWindow
 public:
     explicit GazerGui(QWidget *parent = 0);
     void setMirror(bool val);
+    void setSmoothing(bool val);
     void setHorizGazeTolerance(double tolerance);
     void setVerticalGazeTolerance(double tolerance);
     ~GazerGui();

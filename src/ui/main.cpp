@@ -73,6 +73,7 @@ po::variables_map parse_options(int argc, char** argv){
                                                ">(ffmpeg -f image2pipe -vcodec ppm -r 30 -i - -r 30 -preset ultrafast out.mp4)")
             ("dump-estimates", po::value<string>(), "dump estimated values to file")
             ("mirror", "mirror output")
+            ("smooth", "turn on smoothing")
             ("detect-every-x-frames", po::value<int>(), "detect every x frame, track the rest. Input <=1 represent only detection");
     po::options_description inputops("input options");
     inputops.add_options()
@@ -156,20 +157,24 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
     copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);
     copy_check_arg(options,"vertical-gaze-tolerance", worker.verticalGazeTolerance);
+    worker.smoothingEnabled = options.count("smooth");
     worker.trainingParameters = parse_training_options(options);
     if (options.count("quiet")) worker.showstats = false;
 }
 
 #ifdef ENABLE_QT5
 void set_options(GazerGui& gui, po::variables_map& options){
+    bool smooth = false;
     bool mirror = false;
     double hgazetol, vgazetol;
-    copy_check_arg(options,"mirror", mirror);
+    smooth = options.count("smooth");
+    mirror = options.count("mirror");
     copy_check_arg(options,"horizontal-gaze-tolerance", hgazetol);
     copy_check_arg(options,"vertical-gaze-tolerance", vgazetol);
     gui.setHorizGazeTolerance(hgazetol);
     gui.setVerticalGazeTolerance(vgazetol);
     gui.setMirror(mirror);
+    gui.setSmoothing(smooth);
 }
 #endif
 

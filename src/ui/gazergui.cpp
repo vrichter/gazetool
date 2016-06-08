@@ -24,6 +24,12 @@ void GazerGui::setMirror(bool val)
     ui->mirrorCheckBox->setChecked(val);
 }
 
+void GazerGui::setSmoothing(bool val)
+{
+    ui->smoothCheckBox->setChecked(val);
+}
+
+
 void GazerGui::setHorizGazeTolerance(double tolerance)
 {
     ui->horizToleranceSlider->setValue(tolerance*10);
