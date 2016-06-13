@@ -19,7 +19,60 @@ Compiling
 * run `make install`
 
 ## Running gazetool
-* Run `gazetool.sh -c 0` to use the first webcam attached to your system
+* Run `gazetool.sh -i camera 0` to use the first webcam attached to your system
+* Run `gazetool.sh -i list 0` to list all available image providers
+
+## Library
+
+This project provides a cmake module file which is created in `${CMAKE_INSTALL_PREFIX}/lib/cmake/gazetool` and can be used to link against the  library.
+
+See [main.cpp](./src/ui/main.cpp) and [workerthread.h](./src/lib/workerthread.h) for a usage example.
+
+## Build options
+
+The following options can be passed to cmake via the -D parameter:
+
+###### ENABLE_QT_SUPPORT=OFF
+
+Removes the qt dependency. The demo application will run without a gui.
+
+###### ENABLE_RSB_SUPPORT=ON
+
+Adds dependencies:
+* rsb: https://code.cor-lab.org/projects/rsb
+* rst (0.13.7+): https://code.cor-lab.org/projects/rst
+
+Adds image providers:
+* rsb <scope>: receive images via rsb on `scope`
+* rsb-socket <scope>: receive images via rsb on `scope`, enforce socket
+  communication
+
+Adds publisher:
+* --rsb <scope>: publishes classification results via rsb
+
+###### ENABLE_YARP_SUPPORT=ON
+
+Adds dependencies:
+* yarp: http://www.yarp.it/
+
+Adds image provider:
+* port <port>: receive images via yarp port `port/in`
+
+Adds publisher:
+* --port <port>: publishes classification results via yarp port `port/out`
+
+###### ENABLE_ROS_SUPPORT=ON
+
+Adds dependencies:
+* ros http://www.ros.org/ packages:
+  * roscpp
+  * std_msgs
+  * sensor_msgs
+  * image_transport
+  * cv_bridge
+
+Adds image provider:
+* ros <topic>: receive images via ros topic `topic`
 
 ## Technical Notes
 
