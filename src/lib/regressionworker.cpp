@@ -10,9 +10,9 @@ using namespace std;
 
 
 RegressionWorker::RegressionWorker(BlockingQueue<GazeHypsPtr>& inqueue, EyeLidLearner &eoc, MutualGazeLearner &glearner,
-                         RelativeGazeLearner &rglearner, RelativeEyeLidLearner& rellearner, VerticalGazeLearner& vglearner, int threadcount)
+                         RelativeGazeLearner &rglearner, RelativeEyeLidLearner& rellearner, VerticalGazeLearner& vglearner, HorizontalHeadposeLearner& hhplearner, VerticalHeadposeLearner& vhplearner, int threadcount)
     : tpool(threadcount), _inqueue(inqueue), _hypsqueue(threadcount),
-      lidlearner(eoc), gazelearner(glearner), relativeGazeLearner(rglearner), rellearner(rellearner), vglearner(vglearner)
+      lidlearner(eoc), gazelearner(glearner), relativeGazeLearner(rglearner), rellearner(rellearner), vglearner(vglearner), hhplearner(hhplearner), vhplearner(vhplearner)
 {
     register_thread(*this, &RegressionWorker::thread);
     start();
@@ -56,6 +56,8 @@ void RegressionWorker::runTasks(GazeHypsPtr gazehyps) {
         concurrentClassify(rellearner, ghyp);
         concurrentClassify(relativeGazeLearner, ghyp);
         concurrentClassify(vglearner, ghyp);
+        concurrentClassify(hhplearner, ghyp);
+        concurrentClassify(vhplearner, ghyp);
     }
     tpool.wait_for_all_tasks();
     gazehyps->setready(-1);

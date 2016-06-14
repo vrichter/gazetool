@@ -9,6 +9,8 @@
 #include "relativeeyelidlearner.h"
 #include "relativegazelearner.h"
 #include "verticalgazelearner.h"
+#include "horizontalheadposelearner.h"
+#include "verticalheadposelearner.h"
 #include "eyelidlearner.h"
 #include "featureextractor.h"
 
@@ -17,7 +19,7 @@ class RegressionWorker : public dlib::multithreaded_object
 public:
     RegressionWorker(BlockingQueue<GazeHypsPtr>& inqueue, EyeLidLearner& eoc,
                 MutualGazeLearner& glearner, RelativeGazeLearner& rglearner,
-                RelativeEyeLidLearner &rellearner, VerticalGazeLearner& vglearner, int threadcount);
+                RelativeEyeLidLearner &rellearner, VerticalGazeLearner& vglearner, HorizontalHeadposeLearner& hhplearner, VerticalHeadposeLearner& vhplearner, int threadcount);
     ~RegressionWorker();
     BlockingQueue<GazeHypsPtr>& hypsqueue();
 
@@ -30,6 +32,8 @@ private:
     RelativeGazeLearner& relativeGazeLearner;
     RelativeEyeLidLearner& rellearner;
     VerticalGazeLearner& vglearner;
+    HorizontalHeadposeLearner& hhplearner;
+    VerticalHeadposeLearner& vhplearner;
     FeatureExtractor featureExtractor;
     std::mutex allocmutex;
     void thread();

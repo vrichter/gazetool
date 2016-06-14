@@ -40,8 +40,12 @@ public:
     std::string trainLid;
     std::string streamppm;
     std::string trainGazeEstimator;
+    std::string trainHorizontalHeadposeEstimator;
+    std::string trainVerticalHeadposeEstimator;
     std::string trainLidEstimator;
     std::string trainVerticalGazeEstimator;
+    std::string estimateHorizontalHeadpose;
+    std::string estimateVerticalHeadpose;
     std::string estimateGaze;
     std::string estimateVerticalGaze;
     std::string estimateLid;

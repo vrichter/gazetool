@@ -10,6 +10,9 @@ public:
     ~RlsSmoother();
     RlsSmoother(double windowSize, double forgetting, double cost);
     void smoothValue(boost::optional<double> &value);
+    
+    void rollingAverage(boost::optional<double> &value);
+    void estimateDerivation(boost::optional<double> &value);
 
 private:
     dlib::rls_filter rls;

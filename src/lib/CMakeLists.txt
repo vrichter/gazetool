@@ -9,6 +9,8 @@ SET(GAZETOOL_LIB_SRC
     relativeeyelidlearner.cpp
     relativegazelearner.cpp
     verticalgazelearner.cpp
+    horizontalheadposelearner.cpp
+    verticalheadposelearner.cpp
     facedetectionworker.cpp
     shapedetectionworker.cpp
     gazehyps.cpp

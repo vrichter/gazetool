@@ -15,6 +15,8 @@
 #include "eyelidlearner.h"
 #include "relativeeyelidlearner.h"
 #include "relativegazelearner.h"
+#include "horizontalheadposelearner.h"
+#include "verticalheadposelearner.h"
 #include "facedetectionworker.h"
 #include "shapedetectionworker.h"
 #include "regressionworker.h"
@@ -85,6 +87,10 @@ void WorkerThread::writeEstHeader(ofstream& fout) {
          << "Lid" << "\t"
          << "HorizGaze" << "\t"
          << "VertGaze" << "\t"
+         << "HorizHeadpose" << "\t"
+         << "VertHeadpose" << "\t"
+         << "VertHeadposeDer" << "\t"
+         << "LatHeadpose" << "\t"
          << "MutualGaze"
          << endl;
 }
@@ -94,12 +100,26 @@ void WorkerThread::dumpEst(ofstream& fout, GazeHypsPtr gazehyps) {
         double lid = std::nan("not set");
         double gazeest = std::nan("not set");
         double vertest = std::nan("not set");
+        double hhpest = std::nan("not set");
+        double vhpest = std::nan("not set");
+        double vhpDest = std::nan("not set");
+        double lhpest = std::nan("not set");
         bool mutgaze = false;
         if (gazehyps->size()) {
             GazeHyp& ghyp = gazehyps->hyps(0);
             lid = ghyp.eyeLidClassification.get_value_or(lid);
             gazeest = ghyp.horizontalGazeEstimation.get_value_or(gazeest);
             vertest = ghyp.verticalGazeEstimation.get_value_or(vertest);
+            hhpest = ghyp.horizontalHeadposeEstimation.get_value_or(hhpest);
+            vhpest = ghyp.verticalHeadposeEstimation.get_value_or(vhpest);
+            vhpDest = ghyp.verticalHeadposeEstimationDerivation.get_value_or(vhpDest);
+            /// lateral headpose calc
+            int righteye_x = ghyp.pupils.rightEyeBounds().x;
+            int lefteye_x = ghyp.pupils.leftEyeBounds().x;
+            int righteye_y = ghyp.pupils.rightEyeBounds().y;
+            int lefteye_y = ghyp.pupils.leftEyeBounds().y;
+            double roll_angle = atan2( double(righteye_x - lefteye_x), double(righteye_y - lefteye_y)  ) / M_PI * 180 + 90;
+            lhpest = roll_angle;
             mutgaze = ghyp.isMutualGaze.get_value_or(false);
         }
         fout << gazehyps->frameCounter << "\t"
@@ -108,6 +128,10 @@ void WorkerThread::dumpEst(ofstream& fout, GazeHypsPtr gazehyps) {
              << lid << "\t"
              << gazeest << "\t"
              << vertest << "\t"
+             << hhpest << "\t"
+             << vhpest << "\t"
+             << vhpDest << "\t"
+             << lhpest << "\t"
              << mutgaze
              << endl;
     }
@@ -170,16 +194,20 @@ void WorkerThread::process() {
     EyeLidLearner eoclearner(trainingParameters);
     RelativeEyeLidLearner rellearner(trainingParameters);
     VerticalGazeLearner vglearner(trainingParameters);
+    HorizontalHeadposeLearner hhplearner(trainingParameters);
+    VerticalHeadposeLearner vhplearner(trainingParameters);
     tryLoadModel(glearner, classifyGaze);
     tryLoadModel(eoclearner, classifyLid);
     tryLoadModel(rglearner, estimateGaze);
     tryLoadModel(rellearner, estimateLid);
     tryLoadModel(vglearner, estimateVerticalGaze);
+    tryLoadModel(hhplearner, estimateHorizontalHeadpose);
+    tryLoadModel(vhplearner, estimateVerticalHeadpose);
     statusSubject.notify("Setting up detector threads...");
     std::unique_ptr<ImageProvider> imgProvider(ImageProvider::create(inputType,inputParam,inputSize,desiredFps));
     FaceDetectionWorker faceworker(std::move(imgProvider), threadcount, detectEveryXFrames);
     ShapeDetectionWorker shapeworker(faceworker.hypsqueue(), modelfile, max(1, threadcount/2));
-    RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, max(1, threadcount));
+    RegressionWorker regressionWorker(shapeworker.hypsqueue(), eoclearner, glearner, rglearner, rellearner, vglearner, hhplearner, vhplearner, max(1, threadcount));
     statusSubject.notify("Detector threads started");
     ofstream ppmout;
     if (!streamppm.empty()) {
@@ -197,6 +225,9 @@ void WorkerThread::process() {
     RlsSmoother horizGazeSmoother;
     RlsSmoother vertGazeSmoother;
     RlsSmoother lidSmoother(5, 0.95, 0.09);
+    RlsSmoother horizHeadposeSmoother(10, 1, 0.0001);
+    RlsSmoother vertHeadposeSmoother(1, 1, 0);
+    RlsSmoother vertHeadposeDerivationSmoother(1, 1, 0);
     statusSubject.notify("Entering processing loop...");
     cerr << "Processing frames..." << endl;
     TemporalStats temporalStats;
@@ -215,7 +246,12 @@ void WorkerThread::process() {
                 horizGazeSmoother.smoothValue(ghyp.horizontalGazeEstimation);
                 vertGazeSmoother.smoothValue(ghyp.verticalGazeEstimation);
                 lidSmoother.smoothValue(ghyp.eyeLidClassification);
+                horizHeadposeSmoother.smoothValue(ghyp.horizontalHeadposeEstimation);
             }
+            vertHeadposeSmoother.rollingAverage(ghyp.verticalHeadposeEstimation);
+            vertHeadposeDerivationSmoother.rollingAverage(ghyp.verticalHeadposeEstimationDerivation);
+            vertHeadposeDerivationSmoother.estimateDerivation(ghyp.verticalHeadposeEstimationDerivation);
+            
             interpretHyp(ghyp);
             auto& pupils = ghyp.pupils;
             auto& faceparts = ghyp.faceParts;
@@ -226,11 +262,15 @@ void WorkerThread::process() {
             rellearner.visualize(ghyp, frame);
             vglearner.visualize(ghyp, frame, verticalGazeTolerance);
             rglearner.visualize(ghyp, frame, horizGazeTolerance);
+            hhplearner.visualize(ghyp);
+            vhplearner.visualize(ghyp);
             if (!trainLid.empty()) eoclearner.accumulate(ghyp);
             if (!trainGaze.empty()) glearner.accumulate(ghyp);
             if (!trainGazeEstimator.empty()) rglearner.accumulate(ghyp);
             if (!trainLidEstimator.empty()) rellearner.accumulate(ghyp);
             if (!trainVerticalGazeEstimator.empty()) vglearner.accumulate(ghyp);
+            if (!trainHorizontalHeadposeEstimator.empty()) hhplearner.accumulate(ghyp);
+            if (!trainVerticalHeadposeEstimator.empty()) vhplearner.accumulate(ghyp);
         }
         temporalStats(gazehyps);
         dumpPpm(ppmout, frame);
@@ -259,6 +299,12 @@ void WorkerThread::process() {
     }
     if (rellearner.sampleCount() > 0) {
         rellearner.train(trainLidEstimator);
+    }
+    if (hhplearner.sampleCount() > 0) {
+        hhplearner.train(trainHorizontalHeadposeEstimator);
+    }
+    if (vhplearner.sampleCount() > 0) {
+        vhplearner.train(trainVerticalHeadposeEstimator);
     }
     finishedSubject.notify(nullptr);
     cerr << "Primary worker thread finished processing" << endl;

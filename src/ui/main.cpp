@@ -95,10 +95,14 @@ po::variables_map parse_options(int argc, char** argv){
             ("train-lid-estimator", po::value<string>(), "train lid estimator and save to arg")
             ("estimate-gaze", po::value<string>(), "estimate gaze")
             ("estimate-verticalgaze", po::value<string>(), "estimate vertical gaze")
+            ("estimate-verticalheadpose", po::value<string>(), "estimate vertical headpose")
+            ("estimate-horizontalheadpose", po::value<string>(), "estimate horizontal headpose")
             ("horizontal-gaze-tolerance", po::value<double>(), "mutual gaze tolerance in deg")
             ("vertical-gaze-tolerance", po::value<double>(), "mutual gaze tolerance in deg")
             ("train-gaze-estimator", po::value<string>(), "train gaze estimator and save to arg")
-            ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg");
+            ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg")
+            ("train-verticalheadpose-estimator", po::value<string>(), "train vertical headpose estimator and save to arg")
+            ("train-horizontalheadpose-estimator", po::value<string>(), "train horizontal headpose estimator and save to arg");
     po::options_description trainopts("parameters applied to all active trainers");
     trainopts.add_options()
             ("svm-c", po::value<double>(), "svm c parameter")
@@ -151,8 +155,12 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     copy_check_arg(options,"estimate-lid", worker.estimateLid);
     copy_check_arg(options,"estimate-gaze", worker.estimateGaze);
     copy_check_arg(options,"estimate-verticalgaze", worker.estimateVerticalGaze);
+    copy_check_arg(options,"estimate-verticalheadpose", worker.estimateVerticalHeadpose);
+    copy_check_arg(options,"estimate-horizontalheadpose", worker.estimateHorizontalHeadpose);
     copy_check_arg(options,"train-gaze-estimator", worker.trainGazeEstimator);
     copy_check_arg(options,"train-verticalgaze-estimator", worker.trainVerticalGazeEstimator);
+    copy_check_arg(options,"train-horizontalheadpose-estimator", worker.trainHorizontalHeadposeEstimator);
+    copy_check_arg(options,"train-verticalheadpose-estimator", worker.trainVerticalHeadposeEstimator);
     copy_check_arg(options,"limitfps", worker.limitFps);
     copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
     copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);

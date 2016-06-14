@@ -33,6 +33,9 @@ struct GazeHyp {
     boost::optional<double> mutualGazeClassification;
     boost::optional<double> horizontalGazeEstimation;
     boost::optional<double> verticalGazeEstimation;
+    boost::optional<double> horizontalHeadposeEstimation;
+    boost::optional<double> verticalHeadposeEstimation;
+    boost::optional<double> verticalHeadposeEstimationDerivation;
     boost::optional<bool> isMutualGaze;
     boost::optional<bool> isLidClosed;
     GazeHypList& parentHyp;
