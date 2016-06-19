@@ -59,7 +59,7 @@ TrainingParameters parse_training_options(po::variables_map& options){
 
 po::variables_map parse_options(int argc, char** argv){
     po::variables_map options;
-    po::options_description allopts("\n*** dlibgazer options");
+    po::options_description allopts("\n*** gazetool options");
     po::options_description desc("general options");
     desc.add_options()
             ("help,h", "show help messages")
