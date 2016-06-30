@@ -6,10 +6,12 @@
 
 using namespace std;
 
+dlib::queue<int>::kernel_1a plotQueuePitch;
 
 HorizontalHeadposeLearner::HorizontalHeadposeLearner(TrainingParameters& params) : AbstractLearner(params)
 {
-
+	int n=0;
+	for (int i=0; i<80; i++) plotQueuePitch.enqueue(n);
 }
 
 
@@ -64,7 +66,28 @@ void HorizontalHeadposeLearner::visualize(GazeHyp& ghyp)
     if (!ghyp.verticalHeadposeEstimation.is_initialized()) return;
     double pitch_angle = ghyp.verticalHeadposeEstimation.get();
     if (!std::isfinite(pitch_angle)) return;
-
+	
+	
+	// vis angle
+	int b;
+	plotQueuePitch.dequeue(b);
+	int en = double(pitch_angle*2.5+0.5);
+	plotQueuePitch.enqueue(en);
+	cv::Point e1; cv::Point e2;
+	e1.x = -2; e1.y = 100;
+	e2.x = -1; e2.y = 100;
+	//vis liveplot
+	cv::line(ghyp.parentHyp.frame, e1, cvPoint(100,100), cvScalar(0,255,0), 1, 'A');
+	int zaehler = 0;
+	while (plotQueuePitch.move_next()) {
+		e2.y = 100-plotQueuePitch.element()*2;
+		cv::line(ghyp.parentHyp.frame, e1, e2, cvScalar(0,0,255), 2, 'A');
+		e1.y = e2.y;
+		e1.x++; e2.x++;
+		zaehler++;
+	}
+	
+	
     // calc lateral headpose through position of eyes
 
     int righteye_x = ghyp.pupils.rightEyeBounds().x;
@@ -82,7 +105,7 @@ void HorizontalHeadposeLearner::visualize(GazeHyp& ghyp)
         cv::Point drawP;
         drawP.x = ghyp.shape.part(i)(0);
         drawP.y = ghyp.shape.part(i)(1);
-        cv::circle(ghyp.parentHyp.frame, drawP ,3,CV_RGB(0,0,0),2,2,0);
+        cv::circle(ghyp.parentHyp.frame, drawP ,1,CV_RGB(255,255,255),2,2,0);
     }
 
     // visualisize headpose axis
