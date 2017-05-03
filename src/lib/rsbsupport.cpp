@@ -69,7 +69,8 @@ RsbImageProvider::RsbImageProvider(const std::string &scope, unsigned int buffer
 bool RsbImageProvider::get(cv::Mat& frame) {
     auto image = reader->getImage();
     if(!image) return false;
-    frame = cv::Mat(image.get(),true);
+    //frame = cv::Mat(image.get(),true);
+    frame = cv::cvarrToMat(image.get(),true);
     return true;
 }
 
