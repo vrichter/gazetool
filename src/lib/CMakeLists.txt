@@ -51,7 +51,7 @@ ADD_LIBRARY(gazetool SHARED ${GAZETOOL_LIB_SRC})
 IF(ENABLE_QT_SUPPORT)
     qt5_use_modules(gazetool Core Widgets Gui OpenGL)
 ENDIF()
-#TARGET_LINK_LIBRARIES(gazetool ${GAZETOOL_LIBS})
+TARGET_LINK_LIBRARIES(gazetool ${GAZETOOL_LIBS})
 
 
 set(INSTALL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include/gazetool/")
