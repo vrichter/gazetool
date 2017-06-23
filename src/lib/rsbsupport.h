@@ -22,6 +22,7 @@ public:
 protected:
     class ImageReader;
     std::shared_ptr<ImageReader> reader;
+    std::string id;
 };
 
 class RsbSender
