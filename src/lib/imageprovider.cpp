@@ -5,6 +5,7 @@
 #include <mutex>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <map>
 
 
 using namespace std;
