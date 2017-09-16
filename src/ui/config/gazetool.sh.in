@@ -1,3 +1,11 @@
 #!/bin/bash
 prefix="@CMAKE_INSTALL_PREFIX@"
-exec "$prefix/bin/gazetool" -m "$prefix/share/dlib/shape_predictor_68_face_landmarks.dat" --estimate-gaze "$prefix/share/gazetool/gaze_est_deg.dat" --estimate-verticalgaze "$prefix/share/gazetool/vertgaze_est_deg.dat" --estimate-lid "$prefix/share/gazetool/lid_est.dat" "$@"
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
+exec "$prefix/bin/gazetool" \
+	-m "$prefix/share/dlib/shape_predictor_68_face_landmarks.dat" \
+	--estimate-gaze "$prefix/share/gazetool/gaze_est_deg.dat" \
+	--estimate-verticalgaze "$prefix/share/gazetool/vertgaze_est_deg.dat" \
+	--estimate-lid "$prefix/share/gazetool/lid_est.dat" \
+	"$@"
