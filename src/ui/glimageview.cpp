@@ -12,7 +12,7 @@ GLImageView::~GLImageView() {
 
 
 void GLImageView::initializeGL() {
-    qglClearColor(bgColor);
+    //qglClearColor(bgColor);
     glDisable(GL_DEPTH_TEST);
     glViewport(0, 0, this->width(), this->height());
     glMatrixMode(GL_PROJECTION);
@@ -20,7 +20,7 @@ void GLImageView::initializeGL() {
 	glOrtho(0, this->width(), this->height(), 0.0f, 0.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glEnable (GL_TEXTURE_2D);
+    glEnable (GL_TEXTURE_2D);
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
