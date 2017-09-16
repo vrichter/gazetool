@@ -24,8 +24,6 @@ CvVideoImageProvider::CvVideoImageProvider(int camera, cv::Size size, int desire
 {
     inputFormat = CAMERA;
     capture = cv::VideoCapture(camera);
-    //capture = cv::VideoCapture(CV_CAP_XIAPI);
-    
     desiredSize = size;
     if (size != cv::Size()) {
         capture.set(CV_CAP_PROP_FRAME_WIDTH, size.width);
@@ -61,11 +59,7 @@ string CvVideoImageProvider::getLabel()
 
 string CvVideoImageProvider::getId()
 {
-    string returnValue = "";
-    if (inputFormat != CAMERA) {
-        returnValue = std::to_string(capture.get(CV_CAP_PROP_POS_FRAMES));
-    }
-    return returnValue;
+    return "";
 }
 
 
