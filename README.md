@@ -3,11 +3,11 @@ This repository contains a calibration free gaze tracking system based on freely
 
 Please cite the above paper when using this module for your research.
 
-## Out of the box demo installation
+## Installation
 
 Make sure you have the following dependencies available / installed:
 * QT5: http://www.qt.io/download/
-* opencv: http://opencv.org/downloads.html
+* opencv 2.x.x: http://opencv.org/downloads.html
 * boost: http://www.boost.org/
 * dlib: http://dlib.net/
 * run `getFaceAlignmentModel.sh` in the `data` directory to download dlib's face alignment model which is required for running gazetool.

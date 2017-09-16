@@ -1,3 +1,37 @@
 #!/bin/bash
 prefix="@CMAKE_INSTALL_PREFIX@"
-exec "$prefix/bin/dlibgazer" -m "$prefix/share/gazetool/shape_predictor_68_face_landmarks.dat" --estimate-gaze "$prefix/share/gazetool/gaze_est_deg.dat" --estimate-verticalgaze "$prefix/share/gazetool/vertgaze_est_deg.dat" --estimate-lid "$prefix/share/gazetool/lid_est.dat" "$@"
+
+MODEL_PATHS="/share/gazetool/ /share/dlib/"
+GAZE_MODEL="gaze_est_deg.dat"
+GAZE_VERT_MODEL="vertgaze_est_deg.dat"
+LID_MODEL="lid_est.dat"
+LANDMARK_MODEL="shape_predictor_68_face_landmarks.dat"
+
+function find_model(){
+  model_name="$1"
+  model_paths="$2"
+  found_model=""
+  for model_path_prefix in $model_paths; do
+    if [ -e "${prefix}/${model_path_prefix}/${model_name}" ]; then
+      found_model="${prefix}/${model_path_prefix}/${model_name}"
+      break
+    fi
+  done
+  if [ "$found_model" == "" ]; then
+    (>&2 echo "ERROR: could not find model '${model_name}' in paths $prefix/{$MODEL_PATHS}")
+    exit -1
+  else
+    echo "$found_model"
+  fi
+}
+
+GAZE_MODEL_PATH="$(find_model "$GAZE_MODEL" "$MODEL_PATHS")"
+GAZE_VERT_MODEL_PATH="$(find_model "$GAZE_VERT_MODEL" "$MODEL_PATHS")"
+LID_MODEL_PATH="$(find_model "$LID_MODEL" "$MODEL_PATHS")"
+LANDMARK_MODEL_PATH="$(find_model "$LANDMARK_MODEL" "$MODEL_PATHS")"
+
+exec "$prefix/bin/dlibgazer" \
+  -m "$LANDMARK_MODEL_PATH" \
+  --estimate-gaze "$GAZE_MODEL_PATH" \
+  --estimate-verticalgaze "$GAZE_VERT_MODEL_PATH" \
+  --estimate-lid "$LID_MODEL_PATH" "$@"
