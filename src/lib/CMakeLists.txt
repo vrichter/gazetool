@@ -23,6 +23,8 @@ SET(GAZETOOL_LIB_SRC
     subject.h
     resultpublisher.h
     resultpublisher.cpp
+    faceid.h
+    faceid.cpp
 )
 
 IF(ENABLE_YARP_SUPPORT)

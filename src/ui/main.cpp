@@ -98,7 +98,8 @@ po::variables_map parse_options(int argc, char** argv){
             ("horizontal-gaze-tolerance", po::value<double>(), "mutual gaze tolerance in deg")
             ("vertical-gaze-tolerance", po::value<double>(), "mutual gaze tolerance in deg")
             ("train-gaze-estimator", po::value<string>(), "train gaze estimator and save to arg")
-            ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg");
+            ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg")
+            ("estimate-faceid-vectors", po::value<string>(), "load metric model from arg");
     po::options_description trainopts("parameters applied to all active trainers");
     trainopts.add_options()
             ("svm-c", po::value<double>(), "svm c parameter")
@@ -153,6 +154,7 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     copy_check_arg(options,"estimate-verticalgaze", worker.estimateVerticalGaze);
     copy_check_arg(options,"train-gaze-estimator", worker.trainGazeEstimator);
     copy_check_arg(options,"train-verticalgaze-estimator", worker.trainVerticalGazeEstimator);
+    copy_check_arg(options,"estimate-faceid-vectors", worker.estimateFaceIdVectors);
     copy_check_arg(options,"limitfps", worker.limitFps);
     copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
     copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);

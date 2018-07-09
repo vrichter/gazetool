@@ -45,6 +45,7 @@ public:
     std::string estimateGaze;
     std::string estimateVerticalGaze;
     std::string estimateLid;
+    std::string estimateFaceIdVectors;
     std::string dumpEstimates;
     double limitFps = 0;
     int detectEveryXFrames = 0;

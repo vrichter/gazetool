@@ -35,6 +35,7 @@ struct GazeHyp {
     boost::optional<double> verticalGazeEstimation;
     boost::optional<bool> isMutualGaze;
     boost::optional<bool> isLidClosed;
+    boost::optional<dlib::matrix<float,0,1>> faceIdVector;
     GazeHypList& parentHyp;
     GazeHyp(GazeHypList& parent) : parentHyp(parent) {}
 };
