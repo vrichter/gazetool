@@ -6,6 +6,7 @@
 #include <rsb/Informer.h>
 #include <rst/vision/FaceWithGazeCollection.pb.h>
 #include <rst/vision/FaceLandmarksCollection.pb.h>
+#include <rst/generic/Value.pb.h>
 
 
 class RsbImageProvider : public ImageProvider
@@ -34,4 +35,5 @@ public:
 private:
     rsb::Informer<rst::vision::FaceWithGazeCollection>::Ptr face_informer;
     rsb::Informer<rst::vision::FaceLandmarksCollection>::Ptr landmark_informer;
+    rsb::Informer<rst::generic::Value>::Ptr faceid_informer;
 };

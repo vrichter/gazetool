@@ -17,6 +17,7 @@
 #include <rst/converters/opencv/IplImageConverter.h>
 #include <rst/vision/FaceWithGazeCollection.pb.h>
 #include <rst/vision/FaceLandmarksCollection.pb.h>
+#include <rst/generic/Value.pb.h>
 
 using namespace std;
 
@@ -129,15 +130,17 @@ RsbSender::RsbSender(const std::string& scope)
           boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceLandmarksCollection>>());
     rsb::converter::converterRepository<std::string>()->registerConverter(
           boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceWithGazeCollection>>());
+    rsb::converter::converterRepository<std::string>()->registerConverter(
+          boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::generic::Value>>());
 
     std::string prefix = ( scope.back() == '/' ) ? scope : scope + std::string("/");
     face_informer = rsb::getFactory().createInformer<rst::vision::FaceWithGazeCollection>
         (prefix + std::string("faces"));
     landmark_informer = rsb::getFactory().createInformer<rst::vision::FaceLandmarksCollection>
         (prefix + std::string("landmarks"));
+    faceid_informer = rsb::getFactory().createInformer<rst::generic::Value>
+        (prefix + std::string("faceids"));
 }
-
-
 
 namespace {
   inline void copy_landmarks(const std::vector<cv::Point>& src,
@@ -188,10 +191,25 @@ namespace {
     }
   }
 
+  void set_faceids(const GazeHyp& hyp, rst::generic::Value* dst){
+    dst->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
+    if(hyp.faceIdVector){
+      dlib::matrix<float,0,1> mat = hyp.faceIdVector.get();
+      for (float i : mat){
+        auto elem = dst->mutable_array()->Add();
+        elem->set_type(rst::generic::Value::Type::Value_Type_DOUBLE);
+        elem->set_double_(i);
+      }
+    }
+  }
+
   size_t time_since_epoch(const std::chrono::system_clock::time_point& time){
     using namespace std::chrono;
     return duration_cast<microseconds>(time.time_since_epoch()).count();
   }
+
+
+
 }
 
 
@@ -199,9 +217,12 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
 {
     boost::shared_ptr<rst::vision::FaceWithGazeCollection> faces(new rst::vision::FaceWithGazeCollection());
     boost::shared_ptr<rst::vision::FaceLandmarksCollection> faceLandmarks(new rst::vision::FaceLandmarksCollection());
+    boost::shared_ptr<rst::generic::Value> faceIds(new rst::generic::Value());
+    faceIds->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
     for(GazeHyp hyp : *hyps){
       set_face_with_gaze(hyp, hyps->frame.rows, hyps->frame.cols, faces->add_element());
       set_landmarks(hyp.faceParts,faceLandmarks->add_element());
+      set_faceids(hyp,faceIds->mutable_array()->Add());
     }
     rsb::EventPtr facesEvent = face_informer->createEvent();
     facesEvent->setData(faces);
@@ -209,10 +230,17 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
     rsb::EventPtr faceLandmarksEvent = landmark_informer->createEvent();
     faceLandmarksEvent->setData(faceLandmarks);
     faceLandmarksEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
+    rsb::EventPtr faceidEvent = faceid_informer->createEvent();
+    faceidEvent->setData(faceIds);
+    faceidEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
     auto optCause = stringToCause(hyps->id);
     if (optCause) {
          facesEvent->addCause(optCause.get());
          faceLandmarksEvent->addCause(optCause.get());
+         faceidEvent->addCause(optCause.get());
+    }
+    if(faceIds->array_size() != 0){
+      faceid_informer->publish(faceidEvent);
     }
     face_informer->publish(facesEvent);
     landmark_informer->publish(faceLandmarksEvent);
