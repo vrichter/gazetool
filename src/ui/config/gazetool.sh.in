@@ -2,7 +2,7 @@
 prefix="@CMAKE_INSTALL_PREFIX@"
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
-MODEL_PATHS="{MODEL_PATHS:-/share/gazetool/ /share/dlib/}"
+MODEL_PATHS="${MODEL_PATHS:-/share/gazetool/ /share/dlib/}"
 
 GAZE_MODEL="${GAZE_MODEL:-gaze_est_deg.dat}"
 GAZE_VERT_MODEL="${GAZE_VERT_MODEL:-vertgaze_est_deg.dat}"
