@@ -1,5 +1,5 @@
 *.user*
-build
+build*
 CMakeCache.txt
 CMakeFiles
 Makefile
