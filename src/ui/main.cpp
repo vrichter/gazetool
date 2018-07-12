@@ -103,6 +103,7 @@ po::variables_map parse_options(int argc, char** argv){
             ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg")
             ("train-verticalheadpose-estimator", po::value<string>(), "train vertical headpose estimator and save to arg")
             ("train-horizontalheadpose-estimator", po::value<string>(), "train horizontal headpose estimator and save to arg");
+            ("estimate-faceid-vectors", po::value<string>(), "load metric model from arg");
     po::options_description trainopts("parameters applied to all active trainers");
     trainopts.add_options()
             ("svm-c", po::value<double>(), "svm c parameter")
@@ -161,6 +162,7 @@ void set_options(WorkerThread& worker, po::variables_map& options){
     copy_check_arg(options,"train-verticalgaze-estimator", worker.trainVerticalGazeEstimator);
     copy_check_arg(options,"train-horizontalheadpose-estimator", worker.trainHorizontalHeadposeEstimator);
     copy_check_arg(options,"train-verticalheadpose-estimator", worker.trainVerticalHeadposeEstimator);
+    copy_check_arg(options,"estimate-faceid-vectors", worker.estimateFaceIdVectors);
     copy_check_arg(options,"limitfps", worker.limitFps);
     copy_check_arg(options,"dump-estimates", worker.dumpEstimates);
     copy_check_arg(options,"horizontal-gaze-tolerance", worker.horizGazeTolerance);

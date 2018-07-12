@@ -2,6 +2,35 @@
 prefix="@CMAKE_INSTALL_PREFIX@"
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
+MODEL_PATHS="{MODEL_PATHS:-/share/gazetool/ /share/dlib/}"
+
+GAZE_MODEL="${GAZE_MODEL:-gaze_est_deg.dat}"
+GAZE_VERT_MODEL="${GAZE_VERT_MODEL:-vertgaze_est_deg.dat}"
+LID_MODEL="${LID_MODEL:-lid_est.dat}"
+LANDMARK_MODEL="${LANDMARK_MODEL:-shape_predictor_68_face_landmarks.dat}"
+
+function find_model(){
+  model_name="$1"
+  model_paths="$2"
+  found_model=""
+  for model_path_prefix in $model_paths; do
+    if [ -e "${prefix}/${model_path_prefix}/${model_name}" ]; then
+      found_model="${prefix}/${model_path_prefix}/${model_name}"
+      break
+    fi
+  done
+  if [ "$found_model" == "" ]; then
+    (>&2 echo "ERROR: could not find model '${model_name}' in paths $prefix/{$MODEL_PATHS}")
+    exit -1
+  else
+    echo "$found_model"
+  fi
+}
+
+GAZE_MODEL_PATH="${GAZE_MODEL_PATH:-$(find_model "$GAZE_MODEL" "$MODEL_PATHS")}"
+GAZE_VERT_MODEL_PATH="${GAZE_VERT_MODEL_PATH:-$(find_model "$GAZE_VERT_MODEL" "$MODEL_PATHS")}"
+LID_MODEL_PATH="${LID_MODEL_PATH:-$(find_model "$LID_MODEL" "$MODEL_PATHS")}"
+LANDMARK_MODEL_PATH="${LANDMARK_MODEL_PATH:-$(find_model "$LANDMARK_MODEL" "$MODEL_PATHS")}"
 
 exec "$prefix/bin/gazetool" \
 	-m "$prefix/share/dlib/shape_predictor_68_face_landmarks.dat" \

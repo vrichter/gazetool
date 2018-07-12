@@ -1,6 +1,6 @@
 #pragma once
-#include <opencv2/core/core.hpp>
 #include <QGLWidget>
+#include <opencv2/opencv.hpp>
 
 class GLImageView: public QGLWidget {
 	Q_OBJECT

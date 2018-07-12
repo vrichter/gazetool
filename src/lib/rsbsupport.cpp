@@ -5,17 +5,19 @@
 #include <boost/make_shared.hpp>
 
 #include <rsb/Event.h>
+#include <rsb/EventId.h>
 #include <rsb/Factory.h>
 #include <rsb/Handler.h>
 #include <rsb/MetaData.h>
 #include <rsb/converter/Repository.h>
 #include <rsb/converter/ProtocolBufferConverter.h>
 #include <rsb/eventprocessing/Handler.h>
-#include <rsb/util/QueuePushHandler.h>
+#include <rsb/util/EventQueuePushHandler.h>
 #include <rsc/threading/SynchronizedQueue.h>
 #include <rst/converters/opencv/IplImageConverter.h>
 #include <rst/vision/FaceWithGazeCollection.pb.h>
 #include <rst/vision/FaceLandmarksCollection.pb.h>
+#include <rst/generic/Value.pb.h>
 
 using namespace std;
 
@@ -32,16 +34,51 @@ namespace {
     }
     return result;
   }
+
+  std::string causeToString(const rsb::EventId &id) {
+    std::stringstream str;
+    str << id;
+    return str.str();
+  }
+
+  boost::optional<rsb::EventId> stringToCause(const std::string &id){
+    //EventId strings are expected to look that way:
+    //EventId[participantId = UUID[36e1880f-b270-4671-b515-d2e0bf41d60a], sequenceNumber = 1023]
+    const std::string id_prefix = "participantId = UUID[";
+    const std::string num_prefix = "sequenceNumber = ";
+    boost::optional<rsb::EventId> result;
+    size_t uuid_start, uuid_end, seqnum_start, seqnum_end;
+    if((uuid_start = id.find(id_prefix)) == id.npos) return result;
+    if((uuid_end = id.find("]",uuid_start + id_prefix.size())) == id.npos) return result;
+    if((seqnum_start = id.find(num_prefix)) == id.npos) return result;
+    if((seqnum_end = id.find("]",seqnum_start + num_prefix.size())) == id.npos) return result;
+    uuid_start += id_prefix.size();
+    seqnum_start += num_prefix.size();
+
+    std::stringstream stream(id.substr(seqnum_start,seqnum_end - seqnum_start));
+    boost::uint32_t num;
+    stream >> num;
+    result.emplace(rsc::misc::UUID(id.substr(uuid_start,uuid_end - uuid_start)),num);
+    return result;
+  }
 }
+
+struct ImageData {
+  boost::shared_ptr<IplImage> image;
+  std::string id;
+
+  ImageData() = default;
+  ImageData(boost::shared_ptr<IplImage> img, std::string i) : image(img), id(i) {}
+};
 
 class RsbImageProvider::ImageReader {
 public:
 
   typedef IplImage Image;
   typedef boost::shared_ptr<IplImage> ImagePtr;
-  typedef rsc::threading::SynchronizedQueue<ImagePtr> Queue;
+  typedef rsc::threading::SynchronizedQueue<rsb::EventPtr> Queue;
   typedef boost::shared_ptr<Queue> QueuePtr;
-  typedef rsb::util::QueuePushHandler<Image> ImageHandler;
+  typedef rsb::util::EventQueuePushHandler ImageHandler;
 
   ImageReader(const std::string& scope, unsigned int queue_size, bool socket)
     : queue(new Queue(queue_size)), handler(new ImageHandler(queue))
@@ -50,8 +87,10 @@ public:
     listener->addHandler(handler);
   }
 
-  ImagePtr getImage(){
-    return queue->pop();
+  ImageData getImage(){
+    auto event = queue->pop();
+    return ImageData(boost::static_pointer_cast<IplImage>(event->getData()),
+                     causeToString(event->getId()));
   }
 
 private:
@@ -67,9 +106,11 @@ RsbImageProvider::RsbImageProvider(const std::string &scope, unsigned int buffer
   : reader(new ImageReader(scope, buffer_size,images_via_socket)) {}
 
 bool RsbImageProvider::get(cv::Mat& frame) {
-    auto image = reader->getImage();
-    if(!image) return false;
-    frame = cv::Mat(image.get(),true);
+    auto imagedata = reader->getImage();
+    id = imagedata.id;
+    if(!imagedata.image) return false;
+    //frame = cv::Mat(image.get(),true);
+    frame = cv::cvarrToMat(imagedata.image.get(),true);
     return true;
 }
 
@@ -80,7 +121,7 @@ string RsbImageProvider::getLabel()
 
 string RsbImageProvider::getId()
 {
-    return "";
+    return id;
 }
 
 RsbSender::RsbSender(const std::string& scope)
@@ -89,23 +130,25 @@ RsbSender::RsbSender(const std::string& scope)
           boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceLandmarksCollection>>());
     rsb::converter::converterRepository<std::string>()->registerConverter(
           boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceWithGazeCollection>>());
+    rsb::converter::converterRepository<std::string>()->registerConverter(
+          boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::generic::Value>>());
 
     std::string prefix = ( scope.back() == '/' ) ? scope : scope + std::string("/");
     face_informer = rsb::getFactory().createInformer<rst::vision::FaceWithGazeCollection>
         (prefix + std::string("faces"));
     landmark_informer = rsb::getFactory().createInformer<rst::vision::FaceLandmarksCollection>
         (prefix + std::string("landmarks"));
+    faceid_informer = rsb::getFactory().createInformer<rst::generic::Value>
+        (prefix + std::string("faceids"));
 }
-
-
 
 namespace {
   inline void copy_landmarks(const std::vector<cv::Point>& src,
                              google::protobuf::RepeatedPtrField<rst::math::Vec2DInt>* dst,
-                             int elements)
+                             size_t elements)
   {
     assert(src.size() >= elements);
-    for(int i = 0; i < elements; ++i){
+    for(size_t i = 0; i < elements; ++i){
       rst::math::Vec2DInt* point = dst->Add();
       point->set_x(src[i].x);
       point->set_y(src[i].y);
@@ -148,10 +191,25 @@ namespace {
     }
   }
 
+  void set_faceids(const GazeHyp& hyp, rst::generic::Value* dst){
+    dst->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
+    if(hyp.faceIdVector){
+      dlib::matrix<float,0,1> mat = hyp.faceIdVector.get();
+      for (float i : mat){
+        auto elem = dst->mutable_array()->Add();
+        elem->set_type(rst::generic::Value::Type::Value_Type_DOUBLE);
+        elem->set_double_(i);
+      }
+    }
+  }
+
   size_t time_since_epoch(const std::chrono::system_clock::time_point& time){
     using namespace std::chrono;
     return duration_cast<microseconds>(time.time_since_epoch()).count();
   }
+
+
+
 }
 
 
@@ -159,9 +217,12 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
 {
     boost::shared_ptr<rst::vision::FaceWithGazeCollection> faces(new rst::vision::FaceWithGazeCollection());
     boost::shared_ptr<rst::vision::FaceLandmarksCollection> faceLandmarks(new rst::vision::FaceLandmarksCollection());
+    boost::shared_ptr<rst::generic::Value> faceIds(new rst::generic::Value());
+    faceIds->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
     for(GazeHyp hyp : *hyps){
       set_face_with_gaze(hyp, hyps->frame.rows, hyps->frame.cols, faces->add_element());
       set_landmarks(hyp.faceParts,faceLandmarks->add_element());
+      set_faceids(hyp,faceIds->mutable_array()->Add());
     }
     rsb::EventPtr facesEvent = face_informer->createEvent();
     facesEvent->setData(faces);
@@ -169,6 +230,18 @@ void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
     rsb::EventPtr faceLandmarksEvent = landmark_informer->createEvent();
     faceLandmarksEvent->setData(faceLandmarks);
     faceLandmarksEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
+    rsb::EventPtr faceidEvent = faceid_informer->createEvent();
+    faceidEvent->setData(faceIds);
+    faceidEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
+    auto optCause = stringToCause(hyps->id);
+    if (optCause) {
+         facesEvent->addCause(optCause.get());
+         faceLandmarksEvent->addCause(optCause.get());
+         faceidEvent->addCause(optCause.get());
+    }
+    if(faceIds->array_size() != 0){
+      faceid_informer->publish(faceidEvent);
+    }
     face_informer->publish(facesEvent);
     landmark_informer->publish(faceLandmarksEvent);
 }

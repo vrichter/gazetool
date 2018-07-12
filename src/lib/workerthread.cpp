@@ -22,6 +22,7 @@
 #include "regressionworker.h"
 #include "eyepatcher.h"
 #include "rlssmoother.h"
+#include "faceid.h"
 
 using namespace std;
 using namespace boost::accumulators;
@@ -196,6 +197,7 @@ void WorkerThread::process() {
     VerticalGazeLearner vglearner(trainingParameters);
     HorizontalHeadposeLearner hhplearner(trainingParameters);
     VerticalHeadposeLearner vhplearner(trainingParameters);
+    FaceIdentificationMetric faceid(estimateFaceIdVectors, modelfile);
     tryLoadModel(glearner, classifyGaze);
     tryLoadModel(eoclearner, classifyLid);
     tryLoadModel(rglearner, estimateGaze);
@@ -239,6 +241,8 @@ void WorkerThread::process() {
         } catch(QueueInterruptedException) {
             break;
         }
+        faceid.classify(*gazehyps);
+
         cv::Mat frame = gazehyps->frame;
 
         for (auto& ghyp : *gazehyps) {

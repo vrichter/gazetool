@@ -160,7 +160,7 @@ struct ImageProviderRegister {
 
   std::string description(){
     std::lock_guard<std::mutex> lock(mutex);
-    int length = 0;
+    uint length = 0;
     for(auto it : map){
       if (it.first.size() > length){
         length = it.first.size();
