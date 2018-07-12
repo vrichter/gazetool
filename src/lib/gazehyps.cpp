@@ -46,7 +46,7 @@ std::vector<GazeHyp>::const_iterator GazeHypList::end() const
     return _hyps.end();
 }
 
-size_t GazeHypList::size()
+size_t GazeHypList::size() const
 {
     return _hyps.size();
 }

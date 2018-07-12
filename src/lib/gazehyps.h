@@ -59,7 +59,7 @@ public:
     std::vector<GazeHyp>::iterator end();
     std::vector<GazeHyp>::const_iterator begin() const;
     std::vector<GazeHyp>::const_iterator end() const;
-    size_t size();
+    size_t size() const;
     GazeHyp& hyps(int i);
 
 private:
