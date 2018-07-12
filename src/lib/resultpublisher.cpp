@@ -1,60 +1,78 @@
 #include <stdexcept>
 
 #include "resultpublisher.h"
-#ifdef ENABLE_YARP_SUPPORT
-#include "yarpsupport.h"
-#endif
-#ifdef ENABLE_RSB_SUPPORT
-#include "rsbsupport.h"
-#endif
 
-#ifdef ENABLE_YARP_SUPPORT
-class YarpPublisher : public ResultPublisher {
+namespace { // do not clutter namespace
+  struct ResultPublisherRegister {
+    std::mutex mutex;
+    std::map<std::string,std::pair<ResultPublisher::FactoryFunction,std::string>> map;
 
-  public:
-    YarpPublisher(const std::string& port) : sender(port){}
-    ~YarpPublisher() = default;
-
-    virtual void publish(GazeHypsPtr gazehyps) final {
-      sender.sendGazeHypotheses(gazehyps);
+    void add(const std::string& id, ResultPublisher::FactoryFunction function,const std::string& description){
+      std::lock_guard<std::mutex> lock(mutex);
+      auto it = map.find(id);
+      if(it == map.end()){
+        map[id] = std::make_pair(function,description);
+      } else {
+        throw std::runtime_error("ResultPublisher '" + id + "' already registered");
+      }
     }
 
-  private:
-    YarpSender sender;
-};
-#endif
-#ifdef ENABLE_RSB_SUPPORT
-class RsbPublisher : public ResultPublisher {
-
-  public:
-    RsbPublisher(const std::string& scope) : sender(scope){}
-    ~RsbPublisher() = default;
-
-    virtual void publish(GazeHypsPtr gazehyps) final {
-      sender.sendGazeHypotheses(gazehyps);
+    ResultPublisher::FactoryFunction get(const std::string& id){
+      std::lock_guard<std::mutex> lock(mutex);
+      auto it = map.find(id);
+      if(it != map.end()){
+        return it->second.first;
+      } else {
+        throw std::runtime_error("unknown ResultPublisher '" + id + "'.");
+      }
     }
 
-  private:
-    RsbSender sender;
-};
-#endif
+    std::string description(){
+      std::lock_guard<std::mutex> lock(mutex);
+      uint length = 0;
+      for(auto it : map){
+        if (it.first.size() > length){
+          length = it.first.size();
+        }
+      }
+      std::stringstream builder;
+      builder << "The following result publishers are available:\n";
+      for(auto it : map){
+        builder << "\t" << it.first;
+        for(uint i = it.first.size(); i < length; ++i){
+          builder << " ";
+        }
+        builder << "  arg    " << it.second.second << "\n";
+      }
+      return builder.str();
+    }
+  };
+  static ResultPublisherRegister RPREG;
+} // anonymous namespace
 
-
-
-
-std::unique_ptr<ResultPublisher> ResultPublisher::create(const std::string& name, const std::string& param){
-  if (name == "port") {
-#ifdef ENABLE_YARP_SUPPORT
-      return std::unique_ptr<ResultPublisher>(new YarpPublisher(param));
-#else
-      throw std::runtime_error("Cannot create '" + name + "' publisher. Build without " + name + " support");
-#endif
-  } else if (name == "rsb") {
-#ifdef ENABLE_RSB_SUPPORT
-      return std::unique_ptr<ResultPublisher>(new RsbPublisher(param));
-#else
-      throw std::runtime_error("Cannot create '" + name + "' publisher. Build without " + name + " support");
-#endif
-  }
-  throw std::runtime_error("Unknown result publisher '" + name + "'.");
+void ResultPublisher::registerResultPublisher(const std::string& id, ResultPublisher::FactoryFunction function,
+                                          const std::string& description)
+{
+    RPREG.add(id,function,description);
 }
+
+std::unique_ptr<ResultPublisher>
+ResultPublisher::create(const std::string& type, const std::string& params)
+{
+  auto func = RPREG.get(type);
+  return func(params);
+}
+
+namespace {
+static ResultPublisher::StaticRegistrar list(
+    "list",
+    [](const std::string& params)
+    -> std::unique_ptr<ResultPublisher>
+    {
+      std::cout << RPREG.description() << std::endl;
+      throw std::runtime_error("List output cannot be used as publisher.");
+    },
+    "arg = _ignored_. This output only prints known outputs and throws."
+);
+}
+

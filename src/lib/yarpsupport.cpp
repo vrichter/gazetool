@@ -1,4 +1,5 @@
 #include "yarpsupport.h"
+#include "resultpublisher.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -102,12 +103,20 @@ YarpSender::~YarpSender()
     yarp.fini();
 }
 
-namespace { // register image providers, do not clutter namespace
-static ImageProvider::StaticRegistrar yarp(
+namespace { // register image providers, do not clutter namespacey
+static ImageProvider::StaticRegistrar yarp_image(
     "port",
     [](const std::string& params, const cv::Size& desired_size,const int desired_fps){
       return std::unique_ptr<ImageProvider>(new YarpImageProvider(params));
     },
     "arg = yarp port"
 );
+static ResultPublisher::StaticRegistrar yarp_publisher(
+    "port",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new YarpSender(params));
+    },
+    "publishes results via yarp port. arg = port"
+);
+
 } // anonymus namespace

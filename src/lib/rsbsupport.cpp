@@ -1,4 +1,5 @@
 #include "rsbsupport.h"
+#include "resultpublisher.h"
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -17,7 +18,7 @@
 #include <rst/converters/opencv/IplImageConverter.h>
 #include <rst/vision/FaceWithGazeCollection.pb.h>
 #include <rst/vision/FaceLandmarksCollection.pb.h>
-#include <rst/generic/Value.pb.h>
+#include <rst/math/MatrixDouble.pb.h>
 
 using namespace std;
 
@@ -61,7 +62,13 @@ namespace {
     result.emplace(rsc::misc::UUID(id.substr(uuid_start,uuid_end - uuid_start)),num);
     return result;
   }
-}
+
+  size_t time_since_epoch(const std::chrono::system_clock::time_point& time){
+    using namespace std::chrono;
+    return duration_cast<microseconds>(time.time_since_epoch()).count();
+  }
+
+} // namespace
 
 struct ImageData {
   boost::shared_ptr<IplImage> image;
@@ -124,28 +131,71 @@ string RsbImageProvider::getId()
     return id;
 }
 
-RsbSender::RsbSender(const std::string& scope)
-{
-    rsb::converter::converterRepository<std::string>()->registerConverter(
-          boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceLandmarksCollection>>());
-    rsb::converter::converterRepository<std::string>()->registerConverter(
-          boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::vision::FaceWithGazeCollection>>());
-    rsb::converter::converterRepository<std::string>()->registerConverter(
-          boost::make_shared<rsb::converter::ProtocolBufferConverter<rst::generic::Value>>());
-
-    std::string prefix = ( scope.back() == '/' ) ? scope : scope + std::string("/");
-    face_informer = rsb::getFactory().createInformer<rst::vision::FaceWithGazeCollection>
-        (prefix + std::string("faces"));
-    landmark_informer = rsb::getFactory().createInformer<rst::vision::FaceLandmarksCollection>
-        (prefix + std::string("landmarks"));
-    faceid_informer = rsb::getFactory().createInformer<rst::generic::Value>
-        (prefix + std::string("faceids"));
-}
-
 namespace {
-  inline void copy_landmarks(const std::vector<cv::Point>& src,
-                             google::protobuf::RepeatedPtrField<rst::math::Vec2DInt>* dst,
-                             size_t elements)
+  template<typename RST>
+  class RsbResultPublisher : public ResultPublisher {
+  public:
+    RsbResultPublisher(const std::string& scope, std::function<void(const GazeHypList&,RST&)> fillFunction, bool socket=false)
+      : _fill(fillFunction)
+    {
+      try {
+        rsb::converter::converterRepository<std::string>()->registerConverter(
+          boost::make_shared<rsb::converter::ProtocolBufferConverter<RST>>());
+      } catch (const std::invalid_argument &e) {
+        // ignore already registered
+      }
+      _informer = rsb::getFactory().createInformer<RST>(scope,createParticipantConfig(socket));
+    }
+
+    void publish(GazeHypsPtr hyps) override {
+      rsb::EventPtr event = _informer->createEvent();
+      event->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
+      auto cause = stringToCause(hyps->id);
+      if(cause){
+         event->addCause(cause.get());
+      }
+      auto data = boost::make_shared<RST>();
+      _fill(*hyps,*data);
+      event->setData(data);
+    }
+
+  private:
+    typename rsb::Informer<RST>::Ptr _informer;
+     std::function<void(const GazeHypList&,RST&)> _fill;
+  };
+
+  void fill_face_with_gaze(const GazeHypList& hyps,rst::vision::FaceWithGazeCollection& faces){
+    auto height = hyps.frame.rows;
+    auto width = hyps.frame.cols;
+    for(GazeHyp hyp : hyps){
+      auto dst = faces.add_element();
+      // face region information
+      rst::vision::Face* face = dst->mutable_region();
+      rst::geometry::BoundingBox* region = new  rst::geometry::BoundingBox();
+      region->set_height(hyp.faceDetection.height());
+      region->set_width(hyp.faceDetection.width());
+      region->set_image_height(height);
+      region->set_image_width(width);
+      rst::math::Vec2DInt* top_left = new rst::math::Vec2DInt();
+      top_left->set_x(hyp.faceDetection.left());
+      top_left->set_y(hyp.faceDetection.top());
+      region->set_allocated_top_left(top_left);
+      face->set_allocated_region(region);
+      // gaze information
+      if(hyp.isLidClosed){
+          dst->set_lid_closed(hyp.isLidClosed.get());
+      }
+      if(hyp.horizontalGazeEstimation){
+          dst->set_horizontal_gaze_estimation(hyp.horizontalGazeEstimation.get());
+      }
+      if(hyp.verticalGazeEstimation){
+          dst->set_vertical_gaze_estimation(hyp.verticalGazeEstimation.get());
+      }
+    }
+  }
+  void copy_landmarks(const std::vector<cv::Point>& src,
+                      google::protobuf::RepeatedPtrField<rst::math::Vec2DInt>* dst,
+                      size_t elements)
   {
     assert(src.size() >= elements);
     for(size_t i = 0; i < elements; ++i){
@@ -154,97 +204,38 @@ namespace {
       point->set_y(src[i].y);
     }
   }
-  void set_landmarks(const FaceParts& src, rst::vision::FaceLandmarks* dst){
-    copy_landmarks(src.featurePolygon(FaceParts::JAW),      dst->mutable_jaw(),       17);
-    copy_landmarks(src.featurePolygon(FaceParts::NOSE),     dst->mutable_nose(),       4);
-    copy_landmarks(src.featurePolygon(FaceParts::NOSEWINGS),dst->mutable_nose_wings(), 5);
-    copy_landmarks(src.featurePolygon(FaceParts::RBROW),    dst->mutable_right_brow(), 5);
-    copy_landmarks(src.featurePolygon(FaceParts::LBROW),    dst->mutable_left_brow(),  5);
-    copy_landmarks(src.featurePolygon(FaceParts::REYE),     dst->mutable_right_eye(),  6);
-    copy_landmarks(src.featurePolygon(FaceParts::LEYE),     dst->mutable_left_eye(),   6);
-    copy_landmarks(src.featurePolygon(FaceParts::OUTERLIPS),dst->mutable_outer_lips(),12);
-    copy_landmarks(src.featurePolygon(FaceParts::INNERLIPS),dst->mutable_inner_lips(), 8);
-  }
-
-  void set_face_with_gaze(const GazeHyp& hyp, int height, int width, rst::vision::FaceWithGaze* dst){
-    // face region information
-    rst::vision::Face* face = dst->mutable_region();
-    rst::geometry::BoundingBox* region = new  rst::geometry::BoundingBox();
-    region->set_height(hyp.faceDetection.height());
-    region->set_width(hyp.faceDetection.width());
-    region->set_image_height(height);
-    region->set_image_width(width);
-    rst::math::Vec2DInt* top_left = new rst::math::Vec2DInt();
-    top_left->set_x(hyp.faceDetection.left());
-    top_left->set_y(hyp.faceDetection.top());
-    region->set_allocated_top_left(top_left);
-    face->set_allocated_region(region);
-    // gaze information
-    if(hyp.isLidClosed){
-        dst->set_lid_closed(hyp.isLidClosed.get());
-    }
-    if(hyp.horizontalGazeEstimation){
-        dst->set_horizontal_gaze_estimation(hyp.horizontalGazeEstimation.get());
-    }
-    if(hyp.verticalGazeEstimation){
-        dst->set_vertical_gaze_estimation(hyp.verticalGazeEstimation.get());
+  void fill_face_landmarks(const GazeHypList& hyps,rst::vision::FaceLandmarksCollection& faceLandmarks){
+    for(GazeHyp hyp : hyps){
+      auto src = hyp.faceParts;
+      auto dst = faceLandmarks.add_element();
+      copy_landmarks(src.featurePolygon(FaceParts::JAW),      dst->mutable_jaw(),       17);
+      copy_landmarks(src.featurePolygon(FaceParts::NOSE),     dst->mutable_nose(),       4);
+      copy_landmarks(src.featurePolygon(FaceParts::NOSEWINGS),dst->mutable_nose_wings(), 5);
+      copy_landmarks(src.featurePolygon(FaceParts::RBROW),    dst->mutable_right_brow(), 5);
+      copy_landmarks(src.featurePolygon(FaceParts::LBROW),    dst->mutable_left_brow(),  5);
+      copy_landmarks(src.featurePolygon(FaceParts::REYE),     dst->mutable_right_eye(),  6);
+      copy_landmarks(src.featurePolygon(FaceParts::LEYE),     dst->mutable_left_eye(),   6);
+      copy_landmarks(src.featurePolygon(FaceParts::OUTERLIPS),dst->mutable_outer_lips(),12);
+      copy_landmarks(src.featurePolygon(FaceParts::INNERLIPS),dst->mutable_inner_lips(), 8);
     }
   }
-
-  void set_faceids(const GazeHyp& hyp, rst::generic::Value* dst){
-    dst->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
-    if(hyp.faceIdVector){
-      dlib::matrix<float,0,1> mat = hyp.faceIdVector.get();
-      for (float i : mat){
-        auto elem = dst->mutable_array()->Add();
-        elem->set_type(rst::generic::Value::Type::Value_Type_DOUBLE);
-        elem->set_double_(i);
+  void fill_faceids(const GazeHypList& hyps,rst::math::MatrixDouble& dst){
+    if(hyps.size() == 0 || (!hyps.begin()->faceIdVector)){
+      return;
+    } else {
+      dst.mutable_size()->set_m(hyps.size());
+      dst.mutable_size()->set_n(hyps.begin()->faceIdVector->size());
+      for (auto hyp : hyps){
+        assert(hyp.faceIdVector);
+        assert(hyp.faceIdVector->size() == dst.size().n());
+        for (auto val : hyp.faceIdVector.get()){
+          dst.mutable_data()->add_value(val);
+        }
       }
     }
   }
 
-  size_t time_since_epoch(const std::chrono::system_clock::time_point& time){
-    using namespace std::chrono;
-    return duration_cast<microseconds>(time.time_since_epoch()).count();
-  }
-
-
-
-}
-
-
-void RsbSender::sendGazeHypotheses(GazeHypsPtr hyps)
-{
-    boost::shared_ptr<rst::vision::FaceWithGazeCollection> faces(new rst::vision::FaceWithGazeCollection());
-    boost::shared_ptr<rst::vision::FaceLandmarksCollection> faceLandmarks(new rst::vision::FaceLandmarksCollection());
-    boost::shared_ptr<rst::generic::Value> faceIds(new rst::generic::Value());
-    faceIds->set_type(rst::generic::Value::Type::Value_Type_ARRAY);
-    for(GazeHyp hyp : *hyps){
-      set_face_with_gaze(hyp, hyps->frame.rows, hyps->frame.cols, faces->add_element());
-      set_landmarks(hyp.faceParts,faceLandmarks->add_element());
-      set_faceids(hyp,faceIds->mutable_array()->Add());
-    }
-    rsb::EventPtr facesEvent = face_informer->createEvent();
-    facesEvent->setData(faces);
-    facesEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
-    rsb::EventPtr faceLandmarksEvent = landmark_informer->createEvent();
-    faceLandmarksEvent->setData(faceLandmarks);
-    faceLandmarksEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
-    rsb::EventPtr faceidEvent = faceid_informer->createEvent();
-    faceidEvent->setData(faceIds);
-    faceidEvent->mutableMetaData().setCreateTime(time_since_epoch(hyps->frameTime));
-    auto optCause = stringToCause(hyps->id);
-    if (optCause) {
-         facesEvent->addCause(optCause.get());
-         faceLandmarksEvent->addCause(optCause.get());
-         faceidEvent->addCause(optCause.get());
-    }
-    if(faceIds->array_size() != 0){
-      faceid_informer->publish(faceidEvent);
-    }
-    face_informer->publish(facesEvent);
-    landmark_informer->publish(faceLandmarksEvent);
-}
+} // namespace
 
 namespace { // register image providers, do not clutter namespace
 static ImageProvider::StaticRegistrar rsbgrabber(
@@ -260,5 +251,47 @@ static ImageProvider::StaticRegistrar rsbsocketgrabber(
       return std::unique_ptr<ImageProvider>(new RsbImageProvider(params,1,true));
     },
     "arg = rsb scope (uses socket communication)"
+);
+static ResultPublisher::StaticRegistrar faces_publisher(
+    "rsb-faces",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::vision::FaceWithGazeCollection>(params,fill_face_with_gaze,false));
+    },
+    "publishes results as rst::vision::FaceWithGazeCollection. arg = rsb scope (default transport config)"
+);
+static ResultPublisher::StaticRegistrar faces_socket_publisher(
+    "rsb-socket-faces",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::vision::FaceWithGazeCollection>(params,fill_face_with_gaze,true));
+    },
+    "publishes results as rst::vision::FaceWithGazeCollection. arg = rsb scope (uses socket communication)"
+);
+static ResultPublisher::StaticRegistrar landmarks_publisher(
+    "rsb-landmarks",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::vision::FaceLandmarksCollection>(params,fill_face_landmarks,false));
+    },
+    "publishes results as rst::vision::FaceLandmarksCollection. arg = rsb scope (default transport config)"
+);
+static ResultPublisher::StaticRegistrar landmarks_socket_publisher(
+    "rsb-socket-landmarks",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::vision::FaceLandmarksCollection>(params,fill_face_landmarks,true));
+    },
+    "publishes results as rst::vision::FaceLandmarksCollection. arg = rsb scope (uses socket communication)"
+);
+static ResultPublisher::StaticRegistrar faceids_publisher(
+    "rsb-faceids",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::math::MatrixDouble>(params,fill_faceids,false));
+    },
+    "publishes faceid vectors as rst::math::MatrixDouble. arg = rsb scope (default transport config)"
+);
+static ResultPublisher::StaticRegistrar faceids_socket_publisher(
+    "rsb-socket-faceids",
+    [](const std::string& params){
+      return std::unique_ptr<ResultPublisher>(new RsbResultPublisher<rst::math::MatrixDouble>(params,fill_faceids,true));
+    },
+    "publishes faceid vectors as rst::math::MatrixDouble. arg = rsb scope (uses socket communication)"
 );
 } // anonymus namespace
