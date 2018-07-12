@@ -5,6 +5,7 @@
 
 #include "imageprovider.h"
 #include "gazehyps.h"
+#include "resultpublisher.h"
 
 class YarpImageProvider : public ImageProvider
 {
@@ -23,11 +24,12 @@ protected:
 
 };
 
-class YarpSender {
+class YarpSender : public ResultPublisher {
 
 public:
     YarpSender(const std::string& portname);
     void sendGazeHypotheses(GazeHypsPtr hyps);
+    void publish(GazeHypsPtr gazehyps) override { sendGazeHypotheses(gazehyps); };
     ~YarpSender();
 
 private:

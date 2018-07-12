@@ -83,8 +83,7 @@ po::variables_map parse_options(int argc, char** argv){
             ("fps", po::value<int>(), "request video with arg frames per second");
     po::options_description outopts("output options");
     outopts.add_options()
-            ("rsb", po::value<string>(), "publish results via rsb scope arg")
-            ("port", po::value<string>(), "publish results via yarp port arg");
+            ("output", po::value<std::vector<string> >()->multitoken(), "publish results on outputs. each output is configured by id and arg. use '--output list 0' for more information.");
     po::options_description classifyopts("classification options");
     classifyopts.add_options()
             ("classify-gaze", po::value<string>(), "load classifier from arg")
@@ -182,14 +181,18 @@ void set_options(GazerGui& gui, po::variables_map& options){
 
 std::vector<std::shared_ptr<ResultPublisher>> create_publishers(WorkerThread& worker, po::variables_map& options){
   std::vector<std::shared_ptr<ResultPublisher>> result;
-  for (auto publisher : {"port", "rsb"}) {
-    if(options.count(publisher)){
-      auto ptr = std::shared_ptr<ResultPublisher>(
-            std::move(ResultPublisher::create(publisher,options[publisher].as<std::string>())));
+  if (options["output"].empty()){ return result; }
+  auto output = options["output"].as<std::vector<std::string>>();
+  if((output.size() % 2) != 0) {
+    throw po::error("output option requires 2 arguments for each output. Try --output list 0 for a list of possible configurations.");
+  }
+  for(uint i = 0; i < output.size()/2; ++i){
+    try {
+      auto ptr = std::shared_ptr<ResultPublisher>(ResultPublisher::create(output.at(i*2),output.at(i*2+1)));
       result.push_back(ptr);
-      worker.imageProcessedSignal().connect(
-            [ptr] (GazeHypsPtr gazehyps) { ptr -> publish(gazehyps); }
-      );
+      worker.imageProcessedSignal().connect([ptr] (GazeHypsPtr gazehyps) { ptr -> publish(gazehyps); });
+    } catch (std::runtime_error& e) {
+      throw po::error("error while creating output: '" + output.at(i*2) + "'. error: " + std::string(e.what()));
     }
   }
   return result;
