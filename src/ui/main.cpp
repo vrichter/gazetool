@@ -101,7 +101,7 @@ po::variables_map parse_options(int argc, char** argv){
             ("train-gaze-estimator", po::value<string>(), "train gaze estimator and save to arg")
             ("train-verticalgaze-estimator", po::value<string>(), "train vertical gaze estimator and save to arg")
             ("train-verticalheadpose-estimator", po::value<string>(), "train vertical headpose estimator and save to arg")
-            ("train-horizontalheadpose-estimator", po::value<string>(), "train horizontal headpose estimator and save to arg");
+            ("train-horizontalheadpose-estimator", po::value<string>(), "train horizontal headpose estimator and save to arg")
             ("estimate-faceid-vectors", po::value<string>(), "load metric model from arg");
     po::options_description trainopts("parameters applied to all active trainers");
     trainopts.add_options()
