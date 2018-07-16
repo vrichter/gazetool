@@ -157,6 +157,7 @@ namespace {
       auto data = boost::make_shared<RST>();
       _fill(*hyps,*data);
       event->setData(data);
+      _informer->publish(event);
     }
 
   private:
