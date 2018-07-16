@@ -199,6 +199,7 @@ std::vector<std::shared_ptr<ResultPublisher>> create_publishers(WorkerThread& wo
       auto ptr = std::shared_ptr<ResultPublisher>(ResultPublisher::create(output.at(i*2),output.at(i*2+1)));
       result.push_back(ptr);
       worker.imageProcessedSignal().connect([ptr] (GazeHypsPtr gazehyps) { ptr -> publish(gazehyps); });
+      std::cerr << "  - created publisher name=" << output.at(i*2) << " arg=" << output.at(i*2+1) << std::endl;
     } catch (std::runtime_error& e) {
       throw po::error("error while creating output: '" + output.at(i*2) + "'. error: " + std::string(e.what()));
     }
