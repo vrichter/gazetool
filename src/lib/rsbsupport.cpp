@@ -221,7 +221,10 @@ namespace {
   }
   void fill_faceids(const GazeHypList& hyps,rst::math::MatrixDouble& dst){
     if(hyps.size() == 0 || (!hyps.begin()->faceIdVector)){
-      return;
+        dst.mutable_size()->set_m(0);
+        dst.mutable_size()->set_n(0);
+        dst.mutable_data()->default_instance();
+        return;
     } else {
       dst.mutable_size()->set_m(hyps.size());
       dst.mutable_size()->set_n(hyps.begin()->faceIdVector->size());
