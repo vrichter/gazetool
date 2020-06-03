@@ -73,7 +73,7 @@ void GLImageView::resizeGL(int width, int height) {
 	glOrtho(0.0f, this->width(), this->height(), 0.0f, 0.0f, 1.0f);
 	glMatrixMode (GL_MODELVIEW);
     glLoadIdentity();
-    qglClearColor(bgColor);
+    //qglClearColor(bgColor);
 }
 
 QSize GLImageView::sizeHint() const
